@@ -1,0 +1,8 @@
+{ name: "strack",
+  description: "Track issues on project."
+  version: "0.0.0",
+  main: "main",
+  engines: ["node >= 0.3.1"],
+  author: "Temnov Kirill <allselead@gmail.com>",
+  repository: {type: "git", url: "http://github.com/selead/strack.git"}
+}
