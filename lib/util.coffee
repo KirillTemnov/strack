@@ -103,14 +103,26 @@ Colorize text for output to terminal.
 exports.colorizeText = (text, matchingPattern=null) ->
   result = []
   for word in text.split(" ")
-    if 0 <= word.indexOf matchingPattern
-      result.push word.bold.red
-    else if 0 == word.indexOf statePrefix
-      wrd = word.substring 1
-      result.push wrd.bold.underline.green
+    if 0 == word.indexOf statePrefix
+      m = word.match(/@([-\w]+)/)
+      if m
+        wrd = m[1].bold.underline.green
+        wrd2 = word.substring m[0].length
+        result.push wrd + wrd2
+      else
+        result.push word
     else if 0 == word.indexOf tagPrefix
-      wrd = word.substring 1
-      result.push wrd.underline.grey
+      m = word.match(/\+([-\w]+)/)
+      if m
+        wrd = m[1].underline.grey
+        wrd2 = word.substring m[0].length
+        result.push wrd + wrd2
+      else
+        result.push word
+    else if 0 <= word.indexOf matchingPattern
+      wrd = word.substring 0, matchingPattern.length
+      wrd = wrd.bold.red
+      result.push wrd +  word.substring matchingPattern.length
     else
       result.push word
   result.join " "
