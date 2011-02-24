@@ -1,9 +1,15 @@
+require "colors"
 crypto = require "crypto"
 singType = "md5"
 secret = "change me"
 fs = require "fs"
-path = require "path"
 home = process.env.HOME + "/"
+exports.maxWidth = 100          # todo use this
+
+# prefix for states, e.g. @todo, @done
+statePrefix = "@"
+# prefix for tags, e.g. +javascript, coffee-script
+tagPrefix = "+"
 
 ###
 Create hash from string
@@ -12,9 +18,18 @@ Create hash from string
 @return {String} hash Hex digest hash
 @api public
 ###
-exports.createHash = (str) ->
+exports.createHash = createHash = (str) ->
   crypto.createHmac(singType, secret).update(str).digest("hex")
 
+###
+Create unique ID for string
+
+@param {String} str Source string
+@return {String} hash Unique hex digest hash
+@api public
+###
+exports.createId = createId = (str) ->
+  createHash str + new Date()
 
 ###
 Load config. Loads config from ~/.strack.json
@@ -49,6 +64,89 @@ exports.loadConfig = ->
       fs.writeFileSync strackjson,  JSON.stringify config
       config
     else
-      throw new Exception err.toString()
+      throw err
+
+###
+Parse text and return it tags and comments
+
+###
+exports.parseText = parseText = (text) ->
+  r =
+    states: []
+    tags: []
+  for word in text.split " "
+    if 0 == word.indexOf statePrefix
+      r.states.push word.substring 1
+    else if 0 == word.indexOf tagPrefix
+      r.tags.push word.substring 1
+  r
+
+###
+Make user dictionary from object
+
+@param {Object} userdata Dictionary, containing keys "email" and "user"
+@return {Object} userDict Dictionary, containing only keys "email" and "user"
+@api public
+###
+exports.makeUserDict = (data) ->
+  user: data.user, email: data.email
+
+
+###
+Colorize text for output to terminal.
+
+@param {String} text Text to colorize
+@param {String} pattern Search pattern, default - null
+@return {String} Colored string
+@api public
+###
+exports.colorizeText = (text, matchingPattern=null) ->
+  result = []
+  for word in text.split(" ")
+    if 0 <= word.indexOf matchingPattern
+      result.push word.bold.red
+    else if 0 == word.indexOf statePrefix
+      wrd = word.substring 1
+      result.push wrd.bold.underline.green
+    else if 0 == word.indexOf tagPrefix
+      wrd = word.substring 1
+      result.push wrd.underline.grey
+    else
+      result.push word
+  result.join " "
+
+###
+Repeat string N times
+
+@param {String} str Source string
+@param {Number} N Times to repeat string
+@return {String} result string
+@api private
+###
+times = (str, N) ->
+  s = ""
+  for i in [1..N]
+    s += str
+  s
+
+###
+Cut first line of text. If text contains "\n" all chars after
+this symbol will be removed from resulting string
+
+@param {String} text Text string.
+@param {Number} maxChars Maximum string length in chars, default - 80
+
+@return {String} result Result string. if string length less than maxChars, it will
+                        be cuncatenate with spaces
+@api public
+###
+exports.cutFirstLine = (text, maxChars=80) ->
+  ind = text.indexOf "\n"
+  if 0 <= ind
+    text = text.substring 0, ind
+  if maxChars < text.length
+    text[0..maxChars]
+  else
+    text + times " ", text.length - maxChars
 
 
