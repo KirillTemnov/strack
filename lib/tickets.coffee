@@ -16,7 +16,6 @@ class Tracker
   ###
   _create: (params={}) ->
     @tickets = params.tickets || {}
-    @users = params.users || {}
     @states = params.states || {
       initial: ["todo", "bug", "accept"]
       final: ["done", "fixed", "closed"]}
@@ -77,11 +76,13 @@ class Tracker
     tickets = @_searchTicket id
     switch tickets.length
       when 1
-        tickets[0]
+        return tickets[0]
       when 0
-        throw new Error "Ticket not found"
+        console.log "Ticket with id, starting from '#{id}' not found"
       else
-        throw new Error "Duplicate tickets with id = #{id} " #(#{sys.inspect tickets})"
+        console.log "Duplicate tickets with id = #{id} " #(#{sys.inspect tickets})"
+    process.exit(-1)
+
 
   ###
   Add ticket to tracker
@@ -98,7 +99,7 @@ class Tracker
       modified: d
       author: config.makeUserDict()
       text: text
-      id: util.createId text
+      id: util.createId text, config
       comments: []
       log: []
     @tickets[t.id] = t
@@ -158,7 +159,7 @@ class Tracker
         date: new Date()
         author: config.makeUserDict()
         comment: comment
-        id: util.createId comment}
+        id: util.createId comment, config}
       @_updateTicket t
 
   ###
@@ -188,13 +189,13 @@ class Tracker
 
     for id, t of @tickets       # todo sort results by date, etc
       if stat         # statistics
-        state = util.getState t.text
-#        console.log "state = #{state}, states = #{sys.inspect @states}"
-
+        state = util.getState t.text, config
         if state in @states.final
           stat.done++
+          continue if "false" == config.get "showDonedTasks"
         else
           stat.todo++
+
       if null == search || 0 <= t.text.indexOf search
         switch config.get "log"
           when "tiny"
@@ -212,5 +213,9 @@ class Tracker
           else                  # short of anything else is default
             console.log "#{cFL(t.id, 12).yellow}\t#{util.colorizeText cFL(t.text, 60), search}\t#{util.formatTime t.modified}\t#{t.author.user}"
     if null == search
-      console.log "Tickets: #{stat.done}/#{stat.todo + stat.done}"
+      total = stat.todo + stat.done
+      if 0 < total
+        console.log "Tickets: #{stat.done}/#{stat.todo + stat.done}"
+      else
+        console.log "No tickets yet"
 exports.Tracker = Tracker
