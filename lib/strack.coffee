@@ -38,7 +38,7 @@ showHelp = ->
     when "log"
       console.log "strack log [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
     when "remove"
-      console.log "strack remove id\n\n  Remove ticket/task from tracker\n"
+      console.log "strack remove id [id2, id3...]\n\n  Remove tickets/tasks from tracker\n"
     when "state"
       console.log "strack state id new-state\n\n  Change state of ticket/task\n"
     else

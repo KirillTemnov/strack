@@ -48,4 +48,5 @@ Remove task
 ## Getting help
    
    strack help
+
    strack help command
