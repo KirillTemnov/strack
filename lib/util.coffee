@@ -1,6 +1,6 @@
 require "colors"
 crypto = require "crypto"
-singType = "md5"
+signType = "md5"
 secret = "change me"
 fs = require "fs"
 home = process.env.HOME + "/"
@@ -25,7 +25,7 @@ Create hash from string
 @api public
 ###
 exports.createHash = createHash = (str) ->
-  crypto.createHmac(singType, secret).update(str).digest("hex")
+  crypto.createHmac(signType, secret).update(str).digest("hex")
 
 ###
 Create unique ID for string
