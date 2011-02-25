@@ -62,6 +62,7 @@ exports.run = ->
     when "info", "i"
       if 3 < process.argv.length
         id = process.argv[3]
+        tracker.info id
       else
         console.log "Add id for ticket "
     when "remove", "r", "rm"

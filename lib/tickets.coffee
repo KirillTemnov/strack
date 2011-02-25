@@ -154,7 +154,7 @@ class Tracker
   @param {Object} config Config Object
   @param {String} ticketId Ticket id
   @param {Object} comment Comment text
-  @pai public
+  @api public
   ###
   commentTicket: (config, id, comment) ->
     t = @_getSingleTicket id
@@ -172,6 +172,7 @@ class Tracker
   @param {Object} config Config Object
   @param {String} ticketId Ticket id
   @param {String} newState New State value
+  @api public
   ###
   changeState: (config, id, newState) ->
     if 0 == newState.indexOf util.statePrefix
@@ -180,6 +181,34 @@ class Tracker
       t.text = util.replaceState t.text, newState
       t.modified = new Date()
       @_updateTicket t
+
+
+  ###
+  Show info on ticket
+
+  @param {String} ticketId Ticket id
+  @api public
+  ###
+  info: (id) ->
+    @_logOne @_getSingleTicket id
+
+  ###
+  Log one ticket full info
+
+  @param {Object} ticket Ticket object
+  @param {String} search Search string, default null
+  @api private
+  ###
+  _logOne: (t, search=null) ->
+    console.log "Ticket: #{t.id.yellow}"
+    console.log "Author: #{t.author.user} <#{t.author.email}>"
+    console.log "Created: #{t.created}\nLast modified: #{t.modified}"
+    console.log util.colorizeText t.text, search
+    console.log "\nComments:\n" if 0 < t.comments.length
+    for c in t.comments
+      console.log "#{c.author.user} <#{c.author.email}> :"
+      console.log c.comment
+    console.log  "\n--------------------------------------------------------------------------------\n"
 
 
   ###
@@ -206,15 +235,7 @@ class Tracker
           when "tiny"
             console.log "#{util.colorizeText cFL(t.text, 60)}"
           when "long"
-            console.log "Ticket: #{t.id.yellow}"
-            console.log "Author: #{t.author.user} <#{t.author.email}>"
-            console.log "Created: #{t.created}\nLast modified: #{t.modified}"
-            console.log util.colorizeText t.text, search
-            console.log "\nComments:\n" if 0 < t.comments.length
-            for c in t.comments
-              console.log "#{c.author.user} <#{c.author.email}> :"
-              console.log c.comment
-            console.log  "\n--------------------------------------------------------------------------------\n"
+            @_logOne t, search
           else                  # short of anything else is default
             console.log "#{cFL(t.id, 12).yellow}\t#{util.colorizeText cFL(t.text, 60), search}\t#{util.formatTime t.modified}\t#{t.author.user}"
     if null == search
