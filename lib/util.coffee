@@ -2,6 +2,7 @@ require "colors"
 crypto = require "crypto"
 signType = "md5"
 fs = require "fs"
+readline = require "readline"
 home = process.env.HOME + "/"
 exports.maxWidth = 100          # todo use this
 
@@ -82,6 +83,7 @@ class Config
     @config.secret ||= createId @config.user
     @config.defaultState ||= "todo"
     @config.showDonedTasks ||= "false"
+    @config.eof ||= ".."
 
   update: (params={}) ->
     for k,v of params
@@ -237,4 +239,33 @@ exports.formatTime = (dt) ->
   m = dt.getMinutes()
   m = "0" + m if 10 > m
   "#{hr}:#{m}"
+
+
+# complete = (text) ->
+# ##  console.log "text = #{text}"
+#   if text == 'te'
+#    process.stdout.write "test"
+#   else
+#     text
+
+
+exports.readText = (terminator, fn) ->
+  buf = ""
+  stdin  = process.openStdin()
+  stdout = process.stdout
+  console.log  "After entering text write #{terminator.red} on new line."
+  repl = readline.createInterface stdin, stdout #, complete
+  repl.setPrompt '-> '
+  repl.on  'close',  ->  stdin.destroy()
+  repl.on  'line',   (buffer) ->
+    buffer = buffer.toString()
+    if terminator == buffer
+      fn buf
+      process.exit 0
+    buf +=  buffer +  "\n"
+    repl.setPrompt "   "
+    repl.prompt()
+
+  repl.prompt()
+
 
