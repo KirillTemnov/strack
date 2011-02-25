@@ -2,7 +2,6 @@ require "colors"
 util = require "./util"
 tracker = require "./tickets"
 Tracker = tracker.Tracker
-readline = require "readline"
 fs = require "fs"
 sys = require "sys"
 usage = '''
@@ -13,32 +12,6 @@ strack add
 strack log
 '''
 
-# complete = (text) ->
-# ##  console.log "text = #{text}"
-#   if text == 'te'
-#    process.stdout.write "test"
-#   else
-#     text
-
-# eoi = ".."                      #end of input
-# buf = ''
-# run = (buffer) ->
-#   buffer = buffer.toString()
-#   if buffer == eoi
-#     console.log buf
-#     process.exit(0)
-#   buf +=  buffer +  "\n"
-#   repl.setPrompt "   "
-#   repl.prompt()
-
-#stdin  = process.openStdin()
-#stdout = process.stdout
-#repl = readline.createInterface stdin, stdout #, complete
-# repl.setPrompt '-> '
-# repl.on  'close',  ->  stdin.destroy()
-# repl.on  'line',   run
-# repl.prompt()
-#
 
 exports.run = ->
   config = new util.Config()
@@ -53,13 +26,12 @@ exports.run = ->
       # create file with tickets and id's
       # write files to .gitignore
     when "add", "a"
-      # add new entry
-      # first word may be a tag!
       if 3 < process.argv.length
         data = process.argv[3..]
         tracker.addTicket config, data.join " "
       else
-        console.log "todo : promt to add ticket"
+        util.readText config.get("eof"), (data) ->
+          tracker.addTicket config, data
     when "config"
       key = process.argv[3] if 3 < process.argv.length
       if key
@@ -100,7 +72,8 @@ exports.run = ->
       id = process.argv[3] if 3 < process.argv.length
       comment = process.argv[4..].join " "if 4 < process.argv.length
       if !comment
-        console.log "add comment!"
+        util.readText config.get("eof"), (comment) ->
+          tracker.commentTicket config, id, comment
       else
          tracker.commentTicket config, id, comment
 
