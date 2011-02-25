@@ -7,9 +7,9 @@ home = process.env.HOME + "/"
 exports.maxWidth = 100          # todo use this
 
 # prefix for states, e.g. @todo, @done
-statePrefix = "@"
+exports.statePrefix = statePrefix = "@"
 # prefix for tags, e.g. +javascript, coffee-script
-tagPrefix = "+"
+exports.tagPrefix = tagPrefix = "+"
 
 ###
 Create hash from string
@@ -66,6 +66,8 @@ exports.loadConfig = ->
     else
       throw err
 
+
+
 ###
 Parse text and return it tags and comments
 
@@ -80,6 +82,22 @@ exports.parseText = parseText = (text) ->
     else if 0 == word.indexOf tagPrefix
       r.tags.push word.substring 1
   r
+
+###
+Replace state from one to another
+
+@param {String} text Text with one state
+@param {String} newState New state value
+###
+exports.replaceState = (text, newState) ->
+  r = []
+  for word in text.split " "
+    if 0 == word.indexOf statePrefix
+      r.push newState
+    else
+      r.push word
+  r.join " "
+
 
 ###
 Make user dictionary from object
@@ -162,3 +180,11 @@ exports.cutFirstLine = (text, maxChars=80) ->
     text + times " ", text.length - maxChars
 
 
+exports.formatTime = (dt) ->
+  if "string" == typeof dt
+    dt = new Date Date.parse dt
+  hr = dt.getHours()
+  hr = "0" + hr if 10 > hr
+  m = dt.getMinutes()
+  m = "0" + m if 10 > m
+  "#{hr}:#{m}"
