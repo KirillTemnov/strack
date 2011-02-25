@@ -13,6 +13,6 @@ After install cd to any project directory and type
       strack
 
 
-<img src="http://flic.kr/p/9kYfnQ" />
+<img src="http://farm6.static.flickr.com/5298/5476842202_761faf7d5e_b.jpg" />
 
 
