@@ -11,6 +11,12 @@ exports.statePrefix = statePrefix = "@"
 # prefix for tags, e.g. +javascript, coffee-script
 exports.tagPrefix = tagPrefix = "+"
 
+stateRe = new RegExp "^@(\\S+)"
+tagRe = new RegExp "^\\+(\\S+)"
+separatorCharsRe =  new RegExp "([^:,.+\\-!@#&=]+)"
+
+exports.defaultState = "todo"
+
 ###
 Create hash from string
 
@@ -31,42 +37,68 @@ Create unique ID for string
 exports.createId = createId = (str) ->
   createHash str + new Date()
 
-###
-Load config. Loads config from ~/.strack.json
-If config file not exists, create it.
-Try to gather user name and email from ~/.gitconfig, if
-file not exists, get user from process.env.USER
+class Config
+  ###
+  Load config. Loads config from ~/.strack.json
+  If config file not exists, create it.
+  Try to gather user name and email from ~/.gitconfig, if
+  file not exists, get user from process.env.USER
 
-@return {Object} config Config object, that have "user" and "email" keys.
-@api public
-###
-exports.loadConfig = ->
-  try
-    strackjson = home + ".strack.json"
-    fs.statSync strackjson
-    JSON.parse fs.readFileSync strackjson
-  catch err
-    if 'ENOENT' == err.code
-      config = {}
-      try
-        gitconfig = home + ".gitconfig"
-        fs.statSync gitconfig
-        conf = fs.readFileSync gitconfig
-        for line in conf.toString().split "\n"
-          line = line.trim()
-          if 0 == line.indexOf "name"
-            config.user = line.split("=")[1].trim()
-          else if 0 == line.indexOf "email"
-            config.email = line.split("=")[1].trim()
-      catch err2
-        config.user = config.user || process.env.USER
-        config.email = config.email ||  ""
-      fs.writeFileSync strackjson,  JSON.stringify config
-      config
-    else
-      throw err
+  @return {Object} config Config object, that have "user" and "email" keys.
+  @api public
+  ###
+  constructor: ->
+    try
+      @configFile = home + ".strack.json"
+      fs.statSync @configFile
+      @config = JSON.parse fs.readFileSync @configFile
+    catch err
+      if 'ENOENT' == err.code
+        @config = {}
+        try
+          gitconfig = home + ".gitconfig"
+          fs.statSync gitconfig
+          conf = fs.readFileSync gitconfig
+          for line in conf.toString().split "\n"
+            line = line.trim()
+            if 0 == line.indexOf "name"
+              @config.user = line.split("=")[1].trim()
+            else if 0 == line.indexOf "email"
+              @config.email = line.split("=")[1].trim()
+        catch err2
+          @config.user = config.user || process.env.USER
+          @config.email = config.email ||  ""
+          @config.log = "short"
+        fs.writeFileSync @configFile,  JSON.stringify @config
+      else
+        throw err
 
+  update: (params={}) ->
+    for k,v of params
+      @config[k] = v
+    fs.writeFileSync @configFile,  JSON.stringify @config
 
+  dump: ->
+    console.log "Config parameters:"
+    for k,v of @config
+      console.log "#{k} = #{v}"
+
+  get: (key) ->
+    @config[key]
+
+  set: (key, value) ->
+    @config[key] = value
+
+  ###
+  Make user dictionary from object
+
+  @return {Object} userDict Dictionary, containing only keys "email" and "user"
+  @api public
+  ###
+  makeUserDict: ->
+    user: @config.user, email: @config.email
+
+exports.Config = Config
 
 ###
 Parse text and return it tags and comments
@@ -84,6 +116,19 @@ exports.parseText = parseText = (text) ->
   r
 
 ###
+Get state from text.
+
+@param {String} text Text for search state
+@return {String} state If text have no states, return defaultState
+@api public
+###
+exports.getState = (text) ->
+  for word in text.split " "
+    if 0 == word.indexOf statePrefix
+      return word.substring 1
+  defaultState
+
+###
 Replace state from one to another
 
 @param {String} text Text with one state
@@ -98,17 +143,14 @@ exports.replaceState = (text, newState) ->
       r.push word
   r.join " "
 
-
-###
-Make user dictionary from object
-
-@param {Object} userdata Dictionary, containing keys "email" and "user"
-@return {Object} userDict Dictionary, containing only keys "email" and "user"
-@api public
-###
-exports.makeUserDict = (data) ->
-  user: data.user, email: data.email
-
+getWord = (word, re, prefixLen=1) ->
+  m = word.match re
+  if m
+    word2 = word.substring prefixLen
+    m2 = word2.match separatorCharsRe
+    if m2
+      return [m2[1], word2.substring m2[0].length]
+  null
 
 ###
 Colorize text for output to terminal.
@@ -122,19 +164,15 @@ exports.colorizeText = (text, matchingPattern=null) ->
   result = []
   for word in text.split(" ")
     if 0 == word.indexOf statePrefix
-      m = word.match(/@([-\w]+)/)
-      if m
-        wrd = m[1].bold.underline.green
-        wrd2 = word.substring m[0].length
-        result.push wrd + wrd2
+      words = getWord word, stateRe, statePrefix.length
+      if words
+        result.push words[0].bold.underline.green + words[1]
       else
         result.push word
     else if 0 == word.indexOf tagPrefix
-      m = word.match(/\+([-\w]+)/)
-      if m
-        wrd = m[1].underline.grey
-        wrd2 = word.substring m[0].length
-        result.push wrd + wrd2
+      words = getWord word, tagRe, tagPrefix.length
+      if words
+        result.push words[0].underline.grey + words[1]
       else
         result.push word
     else if 0 <= word.indexOf matchingPattern
@@ -188,3 +226,4 @@ exports.formatTime = (dt) ->
   m = dt.getMinutes()
   m = "0" + m if 10 > m
   "#{hr}:#{m}"
+
