@@ -18,8 +18,8 @@ class Tracker
     @tickets = params.tickets || {}
     @users = params.users || {}
     @states = params.states || {
-      initial: "todo", "bug", "accept"
-      final: "done", "fixed", "closed"}
+      initial: ["todo", "bug", "accept"]
+      final: ["done", "fixed", "closed"]}
 
   ###
   Load tracker file. If file not exists, it will be created with
@@ -184,7 +184,17 @@ class Tracker
   @api public
   ###
   log: (search=null, config) ->
+    stat = todo:0, done: 0   if null == search
+
     for id, t of @tickets       # todo sort results by date, etc
+      if stat         # statistics
+        state = util.getState t.text
+#        console.log "state = #{state}, states = #{sys.inspect @states}"
+
+        if state in @states.final
+          stat.done++
+        else
+          stat.todo++
       if null == search || 0 <= t.text.indexOf search
         switch config.get "log"
           when "tiny"
@@ -201,5 +211,6 @@ class Tracker
             console.log  "\n--------------------------------------------------------------------------------\n"
           else                  # short of anything else is default
             console.log "#{cFL(t.id, 12).yellow}\t#{util.colorizeText cFL(t.text, 60), search}\t#{util.formatTime t.modified}\t#{t.author.user}"
-
+    if null == search
+      console.log "Tickets: #{stat.done}/#{stat.todo + stat.done}"
 exports.Tracker = Tracker
