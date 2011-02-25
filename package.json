@@ -1,8 +1,10 @@
-{ name: "strack",
-  description: "Track issues on project."
-  version: "0.0.0",
-  main: "main",
-  engines: ["node >= 0.3.1"],
-  author: "Temnov Kirill <allselead@gmail.com>",
-  repository: {type: "git", url: "http://github.com/selead/strack.git"}
+{ "name": "strack",
+  "description": "Track issues on project.",
+  "version": "0.2.12",
+  "bin": { "strack" : "./bin/strack.js"},
+  "main": "./lib/strack.js",
+  "dependencies": {"colors": "0.3"},
+  "engines": ["node >= 0.3.1"],
+  "author": "Temnov Kirill <allselead@gmail.com>",
+  "repository": {"type": "git", "url": "http://github.com/selead/strack.git"}
 }
