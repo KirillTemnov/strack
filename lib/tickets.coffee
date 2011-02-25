@@ -104,6 +104,7 @@ class Tracker
       log: []
     @tickets[t.id] = t
     @save()
+    console.log "You'we added ticket:\n#{text}" if "true" == config.get "verbose"
 
   ###
   Remove ticket from tracker.
@@ -114,12 +115,14 @@ class Tracker
     t = @_getSingleTicket id
     delete @tickets[t.id]
     @save()
+    console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
 
   removeTickets: (idList) ->
     for id in idList
       try
         t = @_getSingleTicket id
         delete @tickets[t.id]
+        console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
       catch err
     @save()
 
@@ -161,6 +164,7 @@ class Tracker
         comment: comment
         id: util.createId comment, config}
       @_updateTicket t
+    console.log "You add a comment:\n#{comment}"  if "true" == config.get "verbose"
 
   ###
   Change ticket state
@@ -172,6 +176,7 @@ class Tracker
   changeState: (config, id, newState) ->
     if 0 == newState.indexOf util.statePrefix
       t = @_getSingleTicket id
+      console.log "State of: #{t.text}\nchanged to #{newState}"  if "true" == config.get "verbose"
       t.text = util.replaceState t.text, newState
       t.modified = new Date()
       @_updateTicket t

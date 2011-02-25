@@ -84,6 +84,7 @@ class Config
     @config.defaultState ||= "todo"
     @config.showDonedTasks ||= "false"
     @config.eof ||= ".."
+    @config.verbose || = "true"
 
   update: (params={}) ->
     for k,v of params
