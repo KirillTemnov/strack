@@ -11,19 +11,38 @@ strack [COMMAND] args
 
 strack commands and aliases:
   add, a\tAdd new ticket/task
-  log, l\tShow tracker log.
-        \tSearch by tags, states and regular words
   config\tWork with config options
-  state, s\tChange ticket/task state
-  info, i\tShow info on ticket/task
-  remove, rm\tRemove ticket/task
   comment, c\tComment ticket/task
   help, h\tHelp on commands
+  info, i\tShow info on ticket/task
+  log, l\tShow tracker log.
+        \tSearch by tags, states and regular words
+  remove, rm\tRemove ticket/task
+  state, s\tChange ticket/task state
 
 '''
 
 showHelp = ->
-
+  switch process.argv[3]
+    when "add"
+      console.log "strack add [ticket/task text]\n\n  Add new ticket/task\n  For input multiline text, omit all parameters after add\n"
+    when "config"
+      console.log "strack config [key [value]]\n\n  Work with config options\n  If key and value omited, show all config params\n" +
+        "  If key is set, show key value\n  If key and value is set, write new value to config\n\nConfig options:\n" +
+        '  user\t\t\tUser name\n  email\t\t\tUser email\n  log\t\t\tLog format, one of "tiny", "short", "long"\n  showDonedTasks\tShow done tasks' +
+        ' when watch log, one of "true", "false"\n  verbose\t\tSet/unset verbose mode, one of "true", "false"\n'
+    when "comment"
+      console.log "strack comment id [comment]\n\n  Comment ticket/task\n  For input multiline comment, omit comment parameter\n"
+    when "info"
+      console.log "strack info id\n\n  Show detail information about ticket/task\n"
+    when "log"
+      console.log "strack log [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
+    when "remove"
+      console.log "strack remove id\n\n  Remove ticket/task from tracker\n"
+    when "state"
+      console.log "strack state id new-state\n\n  Change state of ticket/task\n"
+    else
+      console.log usage
 
 exports.run = ->
   config = new util.Config()
@@ -81,12 +100,15 @@ exports.run = ->
         tracker.removeTickets ids
     when "comment", "c"
       id = process.argv[3] if 3 < process.argv.length
-      comment = process.argv[4..].join " "if 4 < process.argv.length
-      if !comment
-        util.readText config.get("eof"), (comment) ->
-          tracker.commentTicket config, id, comment
+      if id
+        comment = process.argv[4..].join " "if 4 < process.argv.length
+        if !comment
+          util.readText config.get("eof"), (comment) ->
+            tracker.commentTicket config, id, comment
+        else
+           tracker.commentTicket config, id, comment
       else
-         tracker.commentTicket config, id, comment
+        console.log "Ticket id is missing"
     when "help", "h"
       showHelp()
     else
