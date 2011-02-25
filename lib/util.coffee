@@ -1,7 +1,6 @@
 require "colors"
 crypto = require "crypto"
 signType = "md5"
-secret = "change me"
 fs = require "fs"
 home = process.env.HOME + "/"
 exports.maxWidth = 100          # todo use this
@@ -15,8 +14,6 @@ stateRe = new RegExp "^@(\\S+)"
 tagRe = new RegExp "^\\+(\\S+)"
 separatorCharsRe =  new RegExp "([^:,.+\\-!@#&=]+)"
 
-exports.defaultState = "todo"
-
 ###
 Create hash from string
 
@@ -24,7 +21,7 @@ Create hash from string
 @return {String} hash Hex digest hash
 @api public
 ###
-exports.createHash = createHash = (str) ->
+exports.createHash = createHash = (str, secret="change me") ->
   crypto.createHmac(signType, secret).update(str).digest("hex")
 
 ###
@@ -34,8 +31,9 @@ Create unique ID for string
 @return {String} hash Unique hex digest hash
 @api public
 ###
-exports.createId = createId = (str) ->
-  createHash str + new Date()
+exports.createId = createId = (str, config=null) ->
+  secret = if config then config.get "secret" else "change me"
+  createHash str + new Date(), secret
 
 class Config
   ###
@@ -52,6 +50,7 @@ class Config
       @configFile = home + ".strack.json"
       fs.statSync @configFile
       @config = JSON.parse fs.readFileSync @configFile
+      @_writeDefaults()
     catch err
       if 'ENOENT' == err.code
         @config = {}
@@ -68,10 +67,21 @@ class Config
         catch err2
           @config.user = config.user || process.env.USER
           @config.email = config.email ||  ""
-          @config.log = "short"
+          @_writeDefaults()
         fs.writeFileSync @configFile,  JSON.stringify @config
       else
         throw err
+
+  ###
+  Write defaults to config in they not presents
+
+  @api private
+  ###
+  _writeDefaults: ->
+    @config.log ||= "short"
+    @config.secret ||= createId @config.user
+    @config.defaultState ||= "todo"
+    @config.showDonedTasks ||= "false"
 
   update: (params={}) ->
     for k,v of params
@@ -119,14 +129,15 @@ exports.parseText = parseText = (text) ->
 Get state from text.
 
 @param {String} text Text for search state
+@param {String} config Config object
 @return {String} state If text have no states, return defaultState
 @api public
 ###
-exports.getState = (text) ->
+exports.getState = (text, config) ->
   for word in text.split " "
     if 0 == word.indexOf statePrefix
       return word.substring 1
-  defaultState
+  config.get "defaultState"
 
 ###
 Replace state from one to another
