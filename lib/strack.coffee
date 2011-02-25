@@ -7,10 +7,22 @@ sys = require "sys"
 usage = '''
 Usage:
 
-strack init
-strack add
-strack log
+strack [COMMAND] args
+
+strack commands and aliases:
+  add, a\tAdd new ticket/task
+  log, l\tShow tracker log.
+        \tSearch by tags, states and regular words
+  config\tWork with config options
+  state, s\tChange ticket/task state
+  info, i\tShow info on ticket/task
+  remove, rm\tRemove ticket/task
+  comment, c\tComment ticket/task
+  help, h\tHelp on commands
+
 '''
+
+showHelp = ->
 
 
 exports.run = ->
@@ -36,17 +48,15 @@ exports.run = ->
       key = process.argv[3] if 3 < process.argv.length
       if key
         value = process.argv[4] if 4 < process.argv.length
-        if value
+        if value                # set new value
           param = {}
           param[key] = value
           config.update param
-        else
+        else                    # show key value
           console.log "#{key} = #{config.get key}"
-      else
+      else                      # dump all settings
         config.dump()
-
-    when "log", "l"
-      # log all or by tag (log + grep!)
+    when "log", "l" # log all or by tag (log + grep!)
       word = process.argv[3] if 3 < process.argv.length
       tracker.log word, config
     when "state", "s"
@@ -77,6 +87,7 @@ exports.run = ->
           tracker.commentTicket config, id, comment
       else
          tracker.commentTicket config, id, comment
-
+    when "help", "h"
+      showHelp()
     else
-      usage
+      console.log usage
