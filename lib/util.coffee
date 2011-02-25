@@ -231,7 +231,13 @@ exports.cutFirstLine = (text, maxChars=80) ->
   else
     text + times " ", text.length - maxChars
 
+###
+Format time from datetime string
 
+@param {String} dt Datetime string
+@return {String} result Formatted time (hh/mm)
+@api public
+###
 exports.formatTime = (dt) ->
   if "string" == typeof dt
     dt = new Date Date.parse dt
@@ -241,6 +247,26 @@ exports.formatTime = (dt) ->
   m = "0" + m if 10 > m
   "#{hr}:#{m}"
 
+###
+List directory, and return list of files, matching mask
+
+@param {String} path Search path
+@param {ReqExp} mask Mask for matching file
+@param {Boolean} recursive If this flag is set, files will ne searched recursively
+@return {Array} result List of file pathes
+@api public
+###
+exports.listDir = listDir = (path, mask=/\.js$/, recursive=true) ->
+  files = []
+  for f in fs.readdirSync path
+    file = path + "/#{f}"
+    try
+      if file.match mask
+        files.push file
+      else if recursive && fs.statSync(file).isDirectory()
+        listDir(file, mask, recursive).forEach (ff) -> files.push ff
+    catch err
+  files
 
 # complete = (text) ->
 # ##  console.log "text = #{text}"
@@ -249,7 +275,13 @@ exports.formatTime = (dt) ->
 #   else
 #     text
 
+###
+Read text from standart input and call fn after user input terminator
 
+@param {String} terminator Terminator string
+@param {Function} fn Callback function, that accept one parameter - readed data
+@api public
+###
 exports.readText = (terminator, fn) ->
   buf = ""
   stdin  = process.openStdin()
