@@ -24,22 +24,22 @@ strack commands and aliases:
 
 showHelp = ->
   switch process.argv[3]
-    when "add"
+    when "add", "a"
       console.log "strack add [ticket/task text]\n\n  Add new ticket/task\n  For input multiline text, omit all parameters after add\n"
     when "config"
       console.log "strack config [key [value]]\n\n  Work with config options\n  If key and value omited, show all config params\n" +
         "  If key is set, show key value\n  If key and value is set, write new value to config\n\nConfig options:\n" +
         '  user\t\t\tUser name\n  email\t\t\tUser email\n  log\t\t\tLog format, one of "tiny", "short", "long"\n  showDonedTasks\tShow done tasks' +
         ' when watch log, one of "true", "false"\n  verbose\t\tSet/unset verbose mode, one of "true", "false"\n'
-    when "comment"
+    when "comment", "c"
       console.log "strack comment id [comment]\n\n  Comment ticket/task\n  For input multiline comment, omit comment parameter\n"
-    when "info"
+    when "info", "i"
       console.log "strack info id\n\n  Show detail information about ticket/task\n"
-    when "log"
+    when "log", "l"
       console.log "strack log [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
-    when "remove"
+    when "remove", "rm"
       console.log "strack remove id [id2, id3...]\n\n  Remove tickets/tasks from tracker\n"
-    when "state"
+    when "state", "s"
       console.log "strack state id new-state\n\n  Change state of ticket/task\n"
     when "fs"
       console.log "strack ld [ext [keywords]]\n\n  Search keywords in file with ext " +

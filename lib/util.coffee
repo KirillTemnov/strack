@@ -274,9 +274,6 @@ exports.colorizeText = (text, matchingPattern=null, done=false) ->
       uninflectedWord = wrd
       word = word.substring matchingPattern.length
     pushWords result, uninflectedWord, word, done
-
-  # console.log "result:\n"
-  # result.forEach (w) -> console.log "  '#{w}'"
   result.join " "
 
 ###
