@@ -99,9 +99,11 @@ class Config
     fs.writeFileSync @configFile,  JSON.stringify @config
 
   dump: ->
-    console.log "Config parameters:"
+    log = new Log()
+    log.add "Config parameters:"
     for k,v of @config
-      console.log "#{k} = #{v}"
+      log.add "#{k} = #{v}"
+    log.write()
 
   get: (key) ->
     @config[key]
@@ -119,6 +121,46 @@ class Config
     user: @config.user, email: @config.email
 
 exports.Config = Config
+
+###
+Class for buffering text, and write it on console, or pass to less utility
+###
+class Log
+  ###
+  Create log object
+
+  @param {Number} maxLines Max lines, that fit on one terminal window, default - 25
+  @return {Object} log New log object
+  @api public
+  ###
+  constructor: (@_maxTerminalLines=25) ->
+    @_data = ""
+    @_lineCount = 0
+
+  ###
+  Add string to log
+
+  @param {String} str String to add
+  @api public
+  ###
+  add: (str) ->
+    @_data += str + "\n"
+    @_lineCount += str.split("\n").length
+
+  ###
+  Write log to terminal or to less pipe
+
+  @api public
+  ###
+  write: ->
+    if @_lineCount < @_maxTerminalLines
+      console.log @_data
+      @_data = ""
+      @_lineCount = 0
+    else
+      console.log "overflow"
+
+exports.Log = Log
 
 ###
 Parse text and return it tags and comments
