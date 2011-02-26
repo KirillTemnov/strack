@@ -37,6 +37,11 @@ exports.createId = createId = (str, config=null) ->
   secret = if config then config.get "secret" else "change me"
   createHash str + new Date(), secret
 
+###
+Class for set or set config flags
+
+todo Add docstrings for Config methods
+###
 class Config
   ###
   Load config. Loads config from ~/.strack.json
@@ -86,6 +91,7 @@ class Config
     @config.showDonedTasks ||= "false"
     @config.eof ||= ".."
     @config.verbose || = "true"
+    @config.maxlinesAfterState ||= "3"
 
   update: (params={}) ->
     for k,v of params

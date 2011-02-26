@@ -3,6 +3,7 @@ Sources parser module
 ###
 fs = require "fs"
 path = require "path"
+util = require "./util"
 
 ###
 todo Add more languages for parsing
@@ -66,12 +67,22 @@ extractCommentsText = (line, opts, mlCommentOpen) ->
     else
       ["", false]
 ###
-todo add docs for searchKeyword
+Add tickets from source file.
+To all tickets add tags: +auto and +(filename.ext)
 
+@param {String} file File path
+@param {Array} tags State tags
+@param {Object} tracker Tracker object
+@param {Object} config Config object
+@api public
 ###
-exports.searchKeyword = (file, tags) ->
+exports.addTickets = (file, tags, tracker, config) ->
   opts = sourceOptions[path.extname(file).substring 1]
   if opts                       # parse file only if parsing options defined
+    linesMax = parseInt config.get "maxlinesAfterState"
+    linesMax ||= 3
+    curLines = 1
+    ticketText = ""
     fs.readFile file, (err, data) ->
       if null == err
         i = 0
@@ -83,4 +94,20 @@ exports.searchKeyword = (file, tags) ->
           i++
           for t in tags
             if 0 <= comment.toLowerCase().indexOf t
-              console.log "#{file}:#{i}\t#{line}"
+              if ticketText
+                tracker.addUniqueTicket config, ticketText + "\n..."
+                ticketText = ""
+              else
+                ticketText = comment.trim().replace(t, util.statePrefix + t) + " +auto +" +
+                  path.basename(file) + "\n" + line
+              curLines = 1
+            else if ticketText
+              if curLines < linesMax
+                ticketText += "\n" + line
+                curLines++
+              else
+                tracker.addUniqueTicket config, ticketText + "\n..."
+                ticketText = ""
+                curLines = 1
+
+

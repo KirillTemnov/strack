@@ -107,6 +107,20 @@ class Tracker
     console.log "You'we added ticket:\n#{text}" if "true" == config.get "verbose"
 
   ###
+  Add unique ticket. Check ticket text for unique before adding
+
+  @param {Object} config Config Object
+  @param {String} text Text of ticket
+  @api public
+  ###
+  addUniqueTicket: (config, text) ->
+    for id, t of @tickets
+      if text == t.text
+        console.log "Add duplicate ticket declined" if "true" == config.get "verbose"
+        return
+    @addTicket config, text
+
+  ###
   Remove ticket from tracker.
 
   @param {String} id Ticket id  starting numbers
@@ -129,7 +143,10 @@ class Tracker
   ###
   Change ticket text
 
-  todo add docs here!
+  @param {Object} config Config Object
+  @param {String} ticketId Ticket id
+  @param {Object} text New ticket text
+  @api public
   ###
   changeTicket: (config, id, text) ->
     t = @_getSingleTicket id

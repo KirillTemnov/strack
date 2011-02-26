@@ -2,8 +2,8 @@ require "colors"
 util = require "./util"
 tracker = require "./tickets"
 Tracker = tracker.Tracker
-fs = require "fs"
 sys = require "sys"
+parser = require "./source-parser"
 usage = '''
 Usage:
 
@@ -19,7 +19,7 @@ strack commands and aliases:
         \tSearch by tags, states and regular words
   remove, rm\tRemove ticket/task
   state, s\tChange ticket/task state
-
+  fs    \tSearch tags in source
 '''
 
 showHelp = ->
@@ -41,6 +41,9 @@ showHelp = ->
       console.log "strack remove id [id2, id3...]\n\n  Remove tickets/tasks from tracker\n"
     when "state"
       console.log "strack state id new-state\n\n  Change state of ticket/task\n"
+    when "fs"
+      console.log "strack ld [ext [keywords]]\n\n  Search keywords in file with ext " +
+        'extension\n  Default ext is "js"\n  Default keywords is [config.defaultState]\n'
     else
       console.log usage
 
@@ -53,7 +56,6 @@ exports.run = ->
   switch process.argv[2]
     when "init"
       "clean Tracker"
-      # fs.writeFileSync "strack.json", JSON.stringify issues
       # create file with tickets and id's
       # write files to .gitignore
     when "add", "a"
@@ -111,5 +113,12 @@ exports.run = ->
         console.log "Ticket id is missing"
     when "help", "h"
       showHelp()
+    when "fs"                   #from source
+      ext = "." + if 3 < process.argv.length then process.argv[3].toLowerCase() else "js"
+      tags =  if 4 < process.argv.length then process.argv[4..] else [config.get "defaultState"]
+      filteredTags = []
+      tags.forEach (tag) -> filteredTags.push tag.toLowerCase()
+      util.listDir(process.cwd(), ext).forEach (file) -> parser.addTickets file, tags, tracker, config
+
     else
       console.log usage
