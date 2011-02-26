@@ -19,30 +19,38 @@ strack commands and aliases:
         \tSearch by tags, states and regular words
   remove, rm\tRemove ticket/task
   state, s\tChange ticket/task state
+  states, st\tChange states for project
   fs    \tSearch tags in source
 '''
 
 showHelp = ->
-  switch process.argv[3]
+  v = process.argv[3]
+  switch v
     when "add", "a"
-      console.log "strack add [ticket/task text]\n\n  Add new ticket/task\n  For input multiline text, omit all parameters after add\n"
+      console.log "strack #{v} [ticket/task text]\n\n  Add new ticket/task\n  For input multiline text, omit all parameters after add\n"
     when "config"
-      console.log "strack config [key [value]]\n\n  Work with config options\n  If key and value omited, show all config params\n" +
+      console.log "strack #{v} [key [value]]\n\n  Work with config options\n  If key and value omited, show all config params\n" +
         "  If key is set, show key value\n  If key and value is set, write new value to config\n\nConfig options:\n" +
         '  user\t\t\tUser name\n  email\t\t\tUser email\n  log\t\t\tLog format, one of "tiny", "short", "long"\n  showDonedTasks\tShow done tasks' +
         ' when watch log, one of "true", "false"\n  verbose\t\tSet/unset verbose mode, one of "true", "false"\n'
     when "comment", "c"
-      console.log "strack comment id [comment]\n\n  Comment ticket/task\n  For input multiline comment, omit comment parameter\n"
+      console.log "strack #{v} id [comment]\n\n  Comment ticket/task\n  For input multiline comment, omit comment parameter\n"
     when "info", "i"
-      console.log "strack info id\n\n  Show detail information about ticket/task\n"
+      console.log "strack #{v} id\n\n  Show detail information about ticket/task\n"
     when "log", "l"
-      console.log "strack log [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
+      console.log "strack #{v} [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
     when "remove", "rm"
-      console.log "strack remove id [id2, id3...]\n\n  Remove tickets/tasks from tracker\n"
+      console.log "strack #{v} id [id2, id3...]\n\n  Remove tickets/tasks from tracker\n"
     when "state", "s"
-      console.log "strack state id new-state\n\n  Change state of ticket/task\n"
+      console.log "strack #{v} id new-state\n\n  Change state of ticket/task\n"
+    when "states", "st"
+      console.log "strack #{v} [group [new states]]\n\n  Work with project states.\n" +
+        '  If optional params omited, show groups with states. Project have two groups\n ' +
+        ' of states "initial" and "final". Final states are final in ticket/task processing\n' +
+        '  If only group specified (it must be "initial" or "final"), will be shown params\n' +
+        '  that belong to this group. New states REPLACE ALL group states.\n'
     when "fs"
-      console.log "strack ld [ext [keywords]]\n\n  Search keywords in file with ext " +
+      console.log "strack #{v} [ext [keywords]]\n\n  Search keywords in file with ext " +
         'extension\n  Default ext is "js"\n  Default keywords is [config.defaultState]\n'
     else
       console.log usage
@@ -90,6 +98,11 @@ exports.run = ->
         tracker.changeState config, id, state
       else
         console.log "To change state add id and new state! "
+    when "states", "st"
+      if 4 < process.argv.length
+        tracker.updateStates process.argv[3..], config
+      else
+        tracker.showStates process.argv[3]
     when "info", "i"
       if 3 < process.argv.length
         id = process.argv[3]

@@ -49,6 +49,36 @@ class Tracker
     data = JSON.stringify @
     fs.writeFileSync filename, data
 
+  ###
+  Show project states
+
+  @api public
+  ###
+  showStates: (which=null) ->
+    if null == which
+      console.log "Project states:"
+      console.log "Initial: #{@states.initial.join ', '} "
+      console.log "Final: #{@states.final.join ', '} "
+    else if which in ["initial", "final"]
+      console.log "#{which} states: #{@states[which].join ', '}"
+    else
+      console.log 'use "initial" or "final", not #{which}'
+
+  ###
+  Update states. Can update "initial" or "final" states
+
+  @param {Array} params List of params. First param must be "initial" of "final",
+                        rest params are values for initial or final states
+  @param {Object} config Config object
+  @api public
+  ###
+  updateStates: (params, config) ->
+    if params[0] in ["initial", "final"]
+      @states[params[0]] = params[1..]
+      @save()
+      console.log "Project #{params[0]} states updated to #{params[1..].join ', '}" if "true" == config.get "verbose"
+    else
+      console.log "Project states not updated" if "true" == config.get "verbose"
 
   ###
   Search ticket in tracker
@@ -87,7 +117,7 @@ class Tracker
   ###
   Add ticket to tracker
 
-  @param {Object} config Config Object
+  @param {Object} config Config object
   @param {String} text Text of ticket
   @api public
   ###
