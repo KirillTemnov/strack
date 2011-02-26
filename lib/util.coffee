@@ -92,6 +92,7 @@ class Config
     @config.eof ||= ".."
     @config.verbose || = "true"
     @config.maxlinesAfterState ||= "3"
+    @config.sortOrder || = "asc"
 
   update: (params={}) ->
     for k,v of params
@@ -187,7 +188,7 @@ Push word to result and if doned flag is true, word become grey
 @api private
 ###
 pushWord = (result, word, makeGrey) ->
-  result.push  if doned then word.grey else word
+  result.push  if makeGrey then word.grey else word
 
 ###
 Apply color or style on text
@@ -323,6 +324,20 @@ exports.formatTime = (dt) ->
   "#{hr}:#{m}"
 
 
+###
+Format date and time from datetime string
+
+@param {String} dt Datetime string
+@return {String} result Formatted time (hh/mm)
+@api public
+###
+exports.formatDateTime = (dt) ->
+  if "string" == typeof dt
+    dt = new Date Date.parse dt
+  dd = dt.toString().split ' '
+  m = dt.getMonth() + 1
+  m = "0" + m if 10 > m
+  dd[4] + " " + dd[2] + "." + m + "." + dd[3]
 
 ###
 List directory, and return list of files, matching mask

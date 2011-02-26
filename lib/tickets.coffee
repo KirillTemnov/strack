@@ -234,6 +234,39 @@ class Tracker
 
 
   ###
+  Sort tickets
+
+  @param {Object} config Config object.
+  @return {Array} tickets Tickets, sorted by asc or desc, depends on config "sortOrder" option
+  @api private
+  ###
+  _sortTickets: (config) ->
+    tickets = []
+    for id, t of @tickets
+      t.state = util.getState t.text, config
+      tickets.push t
+
+    [pos, neg] = [1, -1]
+    if "desc" == config.get "sortOrder"
+      [pos, neg] = [neg, pos]
+    states = @states
+    tickets.sort (t1, t2) ->
+      final1 = t1.state in states.final
+      final2 = t2.state in states.final
+      if final1 == final2
+        if t1.modified == t2.modified
+          0
+        else if t1.modified  < t2.modified
+          pos
+        else
+          neg
+      else if final1
+        pos
+      else
+        neg
+    tickets
+
+  ###
   Log + search tickets
 
   @param {String} search Search string, default null
@@ -243,7 +276,7 @@ class Tracker
   log: (search=null, config) ->
     stat = todo:0, done: 0   if null == search
 
-    for id, t of @tickets       # todo sort results by date, etc
+    for t in @_sortTickets config
       state = util.getState t.text, config
       doned = state in @states.final
       if stat         # statistics
@@ -262,7 +295,7 @@ class Tracker
           else                  # short of anything else is default
             console.log "#{cFL(t.id, 12).yellow}\t" +
                "#{util.colorizeText cFL(t.text, 60), search, doned}\t" +
-               util.colorizeString "#{util.formatTime t.modified}\t#{t.author.user}",
+               util.colorizeString "#{util.formatDateTime t.modified}\t#{t.author.user}",
                  doned, "grey", ""
     if null == search
       total = stat.todo + stat.done
