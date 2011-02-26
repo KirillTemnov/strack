@@ -107,9 +107,9 @@ class Tracker
   @param {String} ticketId Ticket id starting numbers
   @param {Object} config Config object
   @return {Object} ticket Ticket object
-  @api private
+  @api public
   ###
-  _getSingleTicket: (id, config) ->
+  getSingleTicket: (id, config) ->
     tickets = @_searchTicket id, config
     switch tickets.length
       when 1
@@ -164,7 +164,7 @@ class Tracker
   @param {Object} config Config object
   ###
   removeTicket: (id, config) ->
-    t = @_getSingleTicket id, config
+    t = @getSingleTicket id, config
     delete @tickets[t.id]
     @save()
     console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
@@ -172,7 +172,7 @@ class Tracker
   removeTickets: (idList, config) ->
     for id in idList
       try
-        t = @_getSingleTicket id, config
+        t = @getSingleTicket id, config
         delete @tickets[t.id]
         console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
       catch err
@@ -187,18 +187,18 @@ class Tracker
   @api public
   ###
   changeTicket: (config, id, text) ->
-    t = @_getSingleTicket id, config
+    t = @getSingleTicket id, config
     t.author = config.makeUserDict()
     t.text = text
-    @_updateTicket t
+    @updateTicket t
 
   ###
   Update ticket
 
   @param {Object} ticket Ticket to update
-  @api private
+  @api public
   ###
-  _updateTicket: (ticket) ->
+  updateTicket: (ticket) ->
     @tickets[ticket.id] = ticket
     @save()
 
@@ -212,13 +212,13 @@ class Tracker
   @api public
   ###
   commentTicket: (id, comment, config) ->
-    t = @_getSingleTicket id, config
+    t = @getSingleTicket id, config
     t.comments.push {
         date: new Date()
         author: config.makeUserDict()
         comment: comment
         id: util.createId comment, config}
-      @_updateTicket t
+      @updateTicket t
     console.log "You add a comment:\n#{comment}"  if "true" == config.get "verbose"
 
   ###
@@ -231,11 +231,11 @@ class Tracker
   ###
   changeState: (id, newState, config) ->
     if 0 == newState.indexOf util.statePrefix
-      t = @_getSingleTicket id, config
+      t = @getSingleTicket id, config
       console.log "State of: #{t.text}\nchanged to #{newState}"  if "true" == config.get "verbose"
       t.text = util.replaceState t.text, newState
       t.modified = new Date()
-      @_updateTicket t
+      @updateTicket t
 
 
   ###
@@ -246,7 +246,7 @@ class Tracker
   @api public
   ###
   info: (id, config) ->
-    @_logOne @_getSingleTicket(id, config), null, config
+    @_logOne @getSingleTicket(id, config), null, config
 
   ###
   Log one ticket full info

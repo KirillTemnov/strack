@@ -12,6 +12,8 @@ strack commands and aliases:
   add, a\tAdd new ticket/task
   config\tWork with config options
   comment, c\tComment ticket/task
+  fs    \tSearch tags in source
+  edit, e\tEdit ticket title
   help, h\tHelp on commands
   info, i\tShow info on ticket/task
   log, l\tShow tracker log.
@@ -19,7 +21,6 @@ strack commands and aliases:
   remove, rm\tRemove ticket/task
   state, s\tChange ticket/task state
   states, st\tChange states for project
-  fs    \tSearch tags in source
 '''
 
 showHelp = ->
@@ -72,6 +73,15 @@ exports.run = ->
       else
         util.readText config.get("eof"), (data) ->
           tracker.addTicket config, data
+    when "edit", "e"
+      if 3 < process.argv.length
+        t = tracker.getSingleTicket process.argv[3], config
+        util.editTextLines t.text, config.get("eof"),  ((text) ->
+          if text
+            t.text = text
+            tracker.updateTicket t), config.get "showLineNumbers"
+      else
+        console.log "To edit state text add id"
     when "config"
       key = process.argv[3] if 3 < process.argv.length
       if key
@@ -96,7 +106,7 @@ exports.run = ->
           [state, id] = [id, state]
         tracker.changeState id, state, config
       else
-        console.log "To change state add id and new state! "
+        console.log "To change state add id and new state"
     when "states", "st"
       if 4 < process.argv.length
         tracker.updateStates process.argv[3..], config

@@ -93,7 +93,8 @@ class Config
     @config.eof ||= ".."
     @config.verbose || = "true"
     @config.maxlinesAfterState ||= "3"
-    @config.sortOrder || = "asc"
+    @config.sortOrder ||= "asc"
+    @config.showLineNumbers ||= "true"
 
   update: (params={}) ->
     for k,v of params
@@ -396,4 +397,38 @@ exports.readText = (terminator, fn) ->
 
   repl.prompt()
 
+###
+Edit lines in console
+
+@param {String} text Multiline text add to readline history and can access via keyboard
+@param {String} terminator Terminator string
+@param {Function} fn Callback function, that called after all text collected
+@param {Boolean} lineNum Add line numbers if flag is set, default - true
+###
+exports.editTextLines = (text, terminator, fn, lineNum=true) ->
+  buf = ""
+  stdin  = process.openStdin()
+  stdout = process.stdout
+  console.log "Press ↑ or ↓ to access ticket content"
+  console.log  "After entering text write #{terminator.red} on new line."
+  repl = readline.createInterface stdin, stdout
+  repl.history = []
+  i = 0
+  for l in text.split "\n"
+    i++
+    l += " [#{i}]" if lineNum
+    repl.history.push l
+
+  repl.setPrompt '-> '
+  repl.on  'close',  ->  stdin.destroy()
+  repl.on  'line',  (buffer) ->
+    buffer = buffer.toString()
+    if terminator == buffer
+      fn buf
+      process.exit 0
+    buf +=  buffer +  "\n"
+    repl.setPrompt "   "
+    repl.prompt()
+
+  repl.prompt()
 
