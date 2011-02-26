@@ -40,8 +40,6 @@ exports.createId = createId = (str, config=null) ->
 
 ###
 Class for set or set config flags
-
-todo Add docstrings for Config methods
 ###
 class Config
   ###
@@ -96,19 +94,43 @@ class Config
     @config.sortOrder ||= "asc"
     @config.showLineNumbers ||= "true"
 
+  ###
+  Update config with params
+
+  @param {Object} params New config params
+  @api public
+  ###
   update: (params={}) ->
     for k,v of params
       @config[k] = v
     fs.writeFileSync @configFile,  JSON.stringify @config
 
+  ###
+  Dump all config to console
+
+  @api public
+  ###
   dump: ->
     console.log "Config parameters:"
     for k,v of @config
       console.log "#{k} = #{v}"
 
+  ###
+  Get config key
+
+  @param {String} key Config key
+  @api public
+  ###
   get: (key) ->
     @config[key]
 
+  ###
+  Set config key
+
+  @param {String} key Config key
+  @param {String} value Value for key
+  @api public
+  ###
   set: (key, value) ->
     @config[key] = value
 
@@ -169,8 +191,14 @@ exports.replaceState = (text, newState) ->
   r.join " "
 
 ###
-todo Add docs for getWord
+Get word if it matching regexp
 
+@param {String} word Analized word
+@param {RegExp} re Regular expression for match
+@param {Number} prefixLen Prefix length (for get substring of matching text)
+@return {Array|null} result If word match re, return Array of matching part and rest of word.
+                            Else, if word not match re, function returns null
+@api private
 ###
 getWord = (word, re, prefixLen=1) ->
   m = word.match re

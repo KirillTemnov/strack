@@ -1,6 +1,6 @@
 require "colors"
 util = require "./util"
-Tracker = require("./tickets").Tracker
+Tracker = require("./tracker").Tracker
 sys = require "sys"
 parser = require "./source-parser"
 usage = '''
