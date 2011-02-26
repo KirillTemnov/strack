@@ -3,6 +3,7 @@ crypto = require "crypto"
 signType = "md5"
 fs = require "fs"
 readline = require "readline"
+p = require "path"
 home = process.env.HOME + "/"
 exports.maxWidth = 100          # todo use this
 
@@ -247,21 +248,23 @@ exports.formatTime = (dt) ->
   m = "0" + m if 10 > m
   "#{hr}:#{m}"
 
+
+
 ###
 List directory, and return list of files, matching mask
 
 @param {String} path Search path
 @param {ReqExp} mask Mask for matching file
-@param {Boolean} recursive If this flag is set, files will ne searched recursively
+@param {Boolean} recursive If this flag is set, files will be searched recursively
 @return {Array} result List of file pathes
 @api public
 ###
-exports.listDir = listDir = (path, mask=/\.js$/, recursive=true) ->
+exports.listDir = listDir = (path, mask=".js", recursive=true) ->
   files = []
   for f in fs.readdirSync path
     file = path + "/#{f}"
     try
-      if file.match mask
+      if mask == p.extname file
         files.push file
       else if recursive && fs.statSync(file).isDirectory()
         listDir(file, mask, recursive).forEach (ff) -> files.push ff
