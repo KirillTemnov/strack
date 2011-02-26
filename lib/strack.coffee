@@ -12,6 +12,7 @@ strack commands and aliases:
   add, a\tAdd new ticket/task
   config\tWork with config options
   comment, c\tComment ticket/task
+  done, d\tChange ticket/task state
   fs    \tSearch tags in source
   edit, e\tEdit ticket title
   help, h\tHelp on commands
@@ -19,8 +20,8 @@ strack commands and aliases:
   log, l\tShow tracker log.
         \tSearch by tags, states and regular words
   remove, rm\tRemove ticket/task
-  state, s\tChange ticket/task state
   states, st\tChange states for project
+  touch, t\tChange task access time
 '''
 
 showHelp = ->
@@ -41,7 +42,7 @@ showHelp = ->
       console.log "strack #{v} [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
     when "remove", "rm"
       console.log "strack #{v} id [id2, id3...]\n\n  Remove tickets/tasks from tracker\n"
-    when "state", "s"
+    when "done", "d"
       console.log "strack #{v} id new-state\n\n  Change state of ticket/task\n"
     when "states", "st"
       console.log "strack #{v} [group [new states]]\n\n  Work with project states.\n" +
@@ -52,6 +53,8 @@ showHelp = ->
     when "fs"
       console.log "strack #{v} [ext [keywords]]\n\n  Search keywords in file with ext " +
         'extension\n  Default ext is "js"\n  Default keywords is [config.defaultState]\n'
+    when "touch", "t"
+      console.log "strack #{v} id\n\n  Change last access time for task with specified id.\n"
     else
       console.log usage
 
@@ -97,7 +100,7 @@ exports.run = ->
     when "log", "l" # log all or by tag (log + grep!)
       word = process.argv[3] if 3 < process.argv.length
       tracker.log word, config
-    when "state", "s"
+    when "done", "d"
       if 4 < process.argv.length
         # replace state
         state = process.argv[3]
@@ -141,6 +144,12 @@ exports.run = ->
       filteredTags = []
       tags.forEach (tag) -> filteredTags.push tag.toLowerCase()
       util.listDir(process.cwd(), ext).forEach (file) -> parser.addTickets file, tags, tracker, config
-
+    when "touch", "t"
+      if 3 < process.argv.length
+        t = tracker.getSingleTicket process.argv[3], config
+        t.modified = new Date()
+        tracker.updateTicket t
+      else
+        console.log "Ticket id is missing"
     else
       console.log usage

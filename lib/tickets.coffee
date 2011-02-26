@@ -326,15 +326,19 @@ class Tracker
           stat.todo++
 
       if null == search || 0 <= t.text.indexOf search
+        num = if 10 > i then util.colorizeString " ^#{i} ", done, "grey", "" else "    "
         switch config.get "log"
           when "tiny"
-            console.log "#{util.colorizeText cFL(t.text, 60), null, done}"
+            console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done}"
           when "long"
             @_logOne t, search
           else                  # short of anything else is default
-            num = if 10 > i then util.colorizeString " ^#{i} ", done, "grey", "" else "    "
+            comments = if 0 < t.comments.length
+                 util.colorizeString " [c:#{t.comments.length}]\t", done, "grey", ""
+               else
+                 "     \t"
             console.log "#{cFL(t.id, 10).yellow}\t" +
-               "#{util.colorizeText cFL(t.text, 60), search, done}\t#{num}" +
+               "#{util.colorizeText cFL(t.text, 60), search, done}\t#{num}#{comments}" +
                 util.colorizeString "#{util.formatDateTime t.modified}\t#{t.author.user}",
                   done, "grey", ""
     if null == search
