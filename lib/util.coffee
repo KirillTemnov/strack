@@ -6,6 +6,7 @@ readline = require "readline"
 p = require "path"
 home = process.env.HOME + "/"
 exports.maxWidth = 100          # todo use this
+sys = require "sys"             # todo remove on release
 
 # prefix for states, e.g. @todo, @done
 exports.statePrefix = statePrefix = "@"
@@ -88,7 +89,7 @@ class Config
     @config.log ||= "short"
     @config.secret ||= createId @config.user
     @config.defaultState ||= "todo"
-    @config.showDonedTasks ||= "false"
+    @config.showDoneTasks ||= "false"
     @config.eof ||= ".."
     @config.verbose || = "true"
     @config.maxlinesAfterState ||= "3"
@@ -180,15 +181,16 @@ getWord = (word, re, prefixLen=1) ->
   null
 
 ###
-Push word to result and if doned flag is true, word become grey
+Push word to result and if makeGrey flag is true, word become grey
 
 @param {Array} result Accumulator array for words
+@param {String} uninflectedWord Word that pad to second word to the left
 @param {String} word Word string
 @param {Boolean} makeGrey Flag, that points to change word color
 @api private
 ###
-pushWord = (result, word, makeGrey) ->
-  result.push  if makeGrey then word.grey else word
+pushWords = (result, uninflectedWord, word, makeGrey) ->
+  result.push  uninflectedWord + if makeGrey then word.grey else word
 
 ###
 Apply color or style on text
@@ -248,29 +250,33 @@ Colorize text for output to terminal.
 
 @param {String} text Text to colorize
 @param {String} pattern Search pattern, default - null
+@param {Boolean} done Flag, that signal that text must be grey (if done = true)
 @return {String} Colored string
 @api public
 ###
-exports.colorizeText = (text, matchingPattern=null, doned=false) ->
+exports.colorizeText = (text, matchingPattern=null, done=false) ->
   result = []
   for word in text.split(" ")
+    uninflectedWord = ""
     if 0 == word.indexOf statePrefix
       words = getWord word, stateRe, statePrefix.length
       if words
-        result.push words[0].bold.underline.green
+        uninflectedWord = words[0].bold.underline.green
         word =  words[1]
     else if 0 == word.indexOf tagPrefix
       words = getWord word, tagRe, tagPrefix.length
       if words
-        result.push words[0].underline.magenta
+        uninflectedWord = words[0].underline.magenta
         word = words[1]
     else if 0 <= word.indexOf matchingPattern
       wrd = word.substring 0, matchingPattern.length
       wrd = wrd.bold.red
-      result.push wrd
+      uninflectedWord = wrd
       word = word.substring matchingPattern.length
-    pushWord result, word, doned
+    pushWords result, uninflectedWord, word, done
 
+  # console.log "result:\n"
+  # result.forEach (w) -> console.log "  '#{w}'"
   result.join " "
 
 ###
