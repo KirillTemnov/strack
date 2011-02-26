@@ -84,14 +84,20 @@ class Tracker
   Search ticket in tracker
 
   @param {String} ticketId Ticket id starting numbers
+  @param {Object} config Config object
   @return {Array} result Tickets, which have id, strarting from ticketId
   @api private
   ###
-  _searchTicket: (ticketId) ->
+  _searchTicket: (ticketId, config) ->
     result = []
-    for id, t of @tickets
-      if 0 == id.indexOf ticketId
-        result.push t
+    if ticketId.match /^\^\d$/
+      tickets = @_sortTickets config
+      id = parseInt ticketId[1]
+      result.push tickets[id] if id < tickets.length
+    else
+      for id, t of @tickets
+        if 0 == id.indexOf ticketId
+          result.push t
     result
 
   ###
@@ -99,11 +105,12 @@ class Tracker
   If ticket id is not unique, method throws exception
 
   @param {String} ticketId Ticket id starting numbers
+  @param {Object} config Config object
   @return {Object} ticket Ticket object
   @api private
   ###
-  _getSingleTicket: (id) ->
-    tickets = @_searchTicket id
+  _getSingleTicket: (id, config) ->
+    tickets = @_searchTicket id, config
     switch tickets.length
       when 1
         return tickets[0]
@@ -154,17 +161,18 @@ class Tracker
   Remove ticket from tracker.
 
   @param {String} id Ticket id  starting numbers
+  @param {Object} config Config object
   ###
-  removeTicket: (id) ->
-    t = @_getSingleTicket id
+  removeTicket: (id, config) ->
+    t = @_getSingleTicket id, config
     delete @tickets[t.id]
     @save()
     console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
 
-  removeTickets: (idList) ->
+  removeTickets: (idList, config) ->
     for id in idList
       try
-        t = @_getSingleTicket id
+        t = @_getSingleTicket id, config
         delete @tickets[t.id]
         console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
       catch err
@@ -179,7 +187,7 @@ class Tracker
   @api public
   ###
   changeTicket: (config, id, text) ->
-    t = @_getSingleTicket id
+    t = @_getSingleTicket id, config
     t.author = config.makeUserDict()
     t.text = text
     @_updateTicket t
@@ -198,13 +206,13 @@ class Tracker
   ###
   Comment ticket
 
-  @param {Object} config Config Object
   @param {String} ticketId Ticket id
   @param {Object} comment Comment text
+  @param {Object} config Config Object
   @api public
   ###
-  commentTicket: (config, id, comment) ->
-    t = @_getSingleTicket id
+  commentTicket: (id, comment, config) ->
+    t = @_getSingleTicket id, config
     t.comments.push {
         date: new Date()
         author: config.makeUserDict()
@@ -216,14 +224,14 @@ class Tracker
   ###
   Change ticket state
 
-  @param {Object} config Config object
   @param {String} ticketId Ticket id
   @param {String} newState New State value
+  @param {Object} config Config object
   @api public
   ###
-  changeState: (config, id, newState) ->
+  changeState: (id, newState, config) ->
     if 0 == newState.indexOf util.statePrefix
-      t = @_getSingleTicket id
+      t = @_getSingleTicket id, config
       console.log "State of: #{t.text}\nchanged to #{newState}"  if "true" == config.get "verbose"
       t.text = util.replaceState t.text, newState
       t.modified = new Date()
@@ -238,7 +246,7 @@ class Tracker
   @api public
   ###
   info: (id, config) ->
-    @_logOne @_getSingleTicket id, null, config
+    @_logOne @_getSingleTicket(id, config), null, config
 
   ###
   Log one ticket full info
@@ -249,17 +257,17 @@ class Tracker
   @api private
   ###
   _logOne: (t, search=null, config) ->
-    doned = util.getState(t.text, config) in @states.final
-    console.log util.colorizeString "Ticket: #{t.id.yellow}", doned, "grey", ""
-    console.log util.colorizeString "Author: #{t.author.user} <#{t.author.email}>", doned, "grey", ""
-    console.log util.colorizeString "Created: #{t.created}\n", doned, "grey", ""
-    console.log util.colorizeString "Last modified: #{t.modified}", doned, "grey", ""
-    console.log util.colorizeText t.text, search, doned
+    done = util.getState(t.text, config) in @states.final
+    console.log util.colorizeString "Ticket: #{t.id.yellow}", done, "grey", ""
+    console.log util.colorizeString "Author: #{t.author.user} <#{t.author.email}>", done, "grey", ""
+    console.log util.colorizeString "Created: #{t.created}\n", done, "grey", ""
+    console.log util.colorizeString "Last modified: #{t.modified}", done, "grey", ""
+    console.log util.colorizeText t.text, search, done
     if 0 < t.comments.length
-      console.log util.colorizeString "\nComments:\n",  doned, "grey", ""
+      console.log util.colorizeString "\nComments:\n",  done, "grey", ""
     for c in t.comments
-      console.log util.colorizeString "#{c.author.user} <#{c.author.email}> :", doned, "grey", ""
-      console.log util.colorizeString c.comment,  doned, "grey", ""
+      console.log util.colorizeString "#{c.author.user} <#{c.author.email}> :", done, "grey", ""
+      console.log util.colorizeString c.comment,  done, "grey", ""
     console.log  "\n--------------------------------------------------------------------------------\n"
 
 
@@ -305,12 +313,13 @@ class Tracker
   ###
   log: (search=null, config) ->
     stat = todo:0, done: 0   if null == search
-
+    i = -1
     for t in @_sortTickets config
+      i++
       state = util.getState t.text, config
-      doned = state in @states.final
+      done = state in @states.final
       if stat         # statistics
-        if doned
+        if done
           stat.done++
           continue if "false" == config.get "showDonedTasks"
         else
@@ -319,14 +328,15 @@ class Tracker
       if null == search || 0 <= t.text.indexOf search
         switch config.get "log"
           when "tiny"
-            console.log "#{util.colorizeText cFL(t.text, 60), null, doned}"
+            console.log "#{util.colorizeText cFL(t.text, 60), null, done}"
           when "long"
             @_logOne t, search
           else                  # short of anything else is default
-            console.log "#{cFL(t.id, 12).yellow}\t" +
-               "#{util.colorizeText cFL(t.text, 60), search, doned}\t" +
-               util.colorizeString "#{util.formatDateTime t.modified}\t#{t.author.user}",
-                 doned, "grey", ""
+            num = if 10 > i then util.colorizeString " ^#{i} ", done, "grey", "" else "    "
+            console.log "#{cFL(t.id, 10).yellow}\t" +
+               "#{util.colorizeText cFL(t.text, 60), search, done}\t#{num}" +
+                util.colorizeString "#{util.formatDateTime t.modified}\t#{t.author.user}",
+                  done, "grey", ""
     if null == search
       total = stat.todo + stat.done
       if 0 < total

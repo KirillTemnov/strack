@@ -1,7 +1,6 @@
 require "colors"
 util = require "./util"
-tracker = require "./tickets"
-Tracker = tracker.Tracker
+Tracker = require("./tickets").Tracker
 sys = require "sys"
 parser = require "./source-parser"
 usage = '''
@@ -95,7 +94,7 @@ exports.run = ->
         id = process.argv[4]
         if 0 == id.indexOf util.statePrefix
           [state, id] = [id, state]
-        tracker.changeState config, id, state
+        tracker.changeState id, state, config
       else
         console.log "To change state add id and new state! "
     when "states", "st"
@@ -112,16 +111,16 @@ exports.run = ->
     when "remove", "r", "rm"
       if 3 < process.argv.length
         ids = process.argv[3..]
-        tracker.removeTickets ids
+        tracker.removeTickets ids, config
     when "comment", "c"
       id = process.argv[3] if 3 < process.argv.length
       if id
         comment = process.argv[4..].join " "if 4 < process.argv.length
         if !comment
           util.readText config.get("eof"), (comment) ->
-            tracker.commentTicket config, id, comment
+            tracker.commentTicket id, comment, config
         else
-           tracker.commentTicket config, id, comment
+           tracker.commentTicket id, comment, config,
       else
         console.log "Ticket id is missing"
     when "help", "h"
