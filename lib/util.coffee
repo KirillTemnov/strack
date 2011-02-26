@@ -99,7 +99,6 @@ class Config
     fs.writeFileSync @configFile,  JSON.stringify @config
 
   dump: ->
-    log = new Log()
     console.log "Config parameters:"
     for k,v of @config
       console.log "#{k} = #{v}"
@@ -166,6 +165,10 @@ exports.replaceState = (text, newState) ->
       r.push word
   r.join " "
 
+###
+todo Add docs for getWord
+
+###
 getWord = (word, re, prefixLen=1) ->
   m = word.match re
   if m
@@ -176,6 +179,70 @@ getWord = (word, re, prefixLen=1) ->
   null
 
 ###
+Push word to result and if doned flag is true, word become grey
+
+@param {Array} result Accumulator array for words
+@param {String} word Word string
+@param {Boolean} makeGrey Flag, that points to change word color
+@api private
+###
+pushWord = (result, word, makeGrey) ->
+  result.push  if doned then word.grey else word
+
+###
+Apply color or style on text
+
+@param {String} text Text to apply color
+@param {String|Array} color Color can be a string or a list of strings
+@return {String} coloredText Text with applyed color
+@api private
+###
+applyColor = (text, color) ->
+  switch color
+    when "black"
+      text.black
+    when "white"
+      text.white
+    when "magenta"
+      text.magenta
+    when "blue"
+      text.blue
+    when "green"
+      text.green
+    when "grey"
+      text.grey
+    when "yellow"
+      text.yellow
+    when "red"
+      text.red
+    when "underline"
+      text.underline
+    when "bold"
+      text.bold
+    when "italic"
+      text.italic
+    else
+      if "object" == typeof color
+        for c in color
+          text = applyColor text, c
+        c
+      text
+
+###
+Colorize string.
+
+@param {String} str Source string
+@param {Boolean} flag Color flag
+@param {String|Array} trueColor Color(s), that applied if flag is set to true
+@param {String|Array} falseColor Color(s), that applied if flag is set to false
+@return {String} result Resulting string
+@api public
+###
+exports.colorizeString = (str, flag, trueColor="green", falseColor="grey") ->
+  applyColor  str, if flag then trueColor else falseColor
+
+
+###
 Colorize text for output to terminal.
 
 @param {String} text Text to colorize
@@ -183,27 +250,26 @@ Colorize text for output to terminal.
 @return {String} Colored string
 @api public
 ###
-exports.colorizeText = (text, matchingPattern=null) ->
+exports.colorizeText = (text, matchingPattern=null, doned=false) ->
   result = []
   for word in text.split(" ")
     if 0 == word.indexOf statePrefix
       words = getWord word, stateRe, statePrefix.length
       if words
-        result.push words[0].bold.underline.green + words[1]
-      else
-        result.push word
+        result.push words[0].bold.underline.green
+        word =  words[1]
     else if 0 == word.indexOf tagPrefix
       words = getWord word, tagRe, tagPrefix.length
       if words
-        result.push words[0].underline.grey + words[1]
-      else
-        result.push word
+        result.push words[0].underline.magenta
+        word = words[1]
     else if 0 <= word.indexOf matchingPattern
       wrd = word.substring 0, matchingPattern.length
       wrd = wrd.bold.red
-      result.push wrd +  word.substring matchingPattern.length
-    else
-      result.push word
+      result.push wrd
+      word = word.substring matchingPattern.length
+    pushWord result, word, doned
+
   result.join " "
 
 ###
