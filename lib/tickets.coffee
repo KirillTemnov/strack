@@ -90,9 +90,9 @@ class Tracker
   ###
   _searchTicket: (ticketId, config) ->
     result = []
-    if ticketId.match /^\^\d$/
+    if ticketId.match /^\^.$/
       tickets = @_sortTickets config
-      id = parseInt ticketId[1]
+      id = parseInt ticketId[1], 36
       result.push tickets[id] if id < tickets.length
     else
       for id, t of @tickets
@@ -326,7 +326,7 @@ class Tracker
           stat.todo++
 
       if null == search || 0 <= t.text.indexOf search
-        num = if 10 > i then util.colorizeString " ^#{i} ", done, "grey", "" else "    "
+        num = if 36 > i then util.colorizeString " ^#{i.toString(16)} ", done, "grey", "" else "    "
         switch config.get "log"
           when "tiny"
             console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done}"

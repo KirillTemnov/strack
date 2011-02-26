@@ -10,7 +10,7 @@ strack [COMMAND] args
 
 strack commands and aliases:
   add, a\tAdd new ticket/task
-  config\tWork with config options
+  config, cf\tWork with config options
   comment, c\tComment ticket/task
   done, d\tChange ticket/task state
   fs    \tSearch tags in source
@@ -29,7 +29,7 @@ showHelp = ->
   switch v
     when "add", "a"
       console.log "strack #{v} [ticket/task text]\n\n  Add new ticket/task\n  For input multiline text, omit all parameters after add\n"
-    when "config"
+    when "config", "cf"
       console.log "strack #{v} [key [value]]\n\n  Work with config options\n  If key and value omited, show all config params\n" +
         "  If key is set, show key value\n  If key and value is set, write new value to config\n\nConfig options:\n" +
         '  user\t\t\tUser name\n  email\t\t\tUser email\n  log\t\t\tLog format, one of "tiny", "short", "long"\n  showDonedTasks\tShow done tasks' +
@@ -85,7 +85,7 @@ exports.run = ->
             tracker.updateTicket t), config.get "showLineNumbers"
       else
         console.log "To edit state text add id"
-    when "config"
+    when "config", "cf"
       key = process.argv[3] if 3 < process.argv.length
       if key
         value = process.argv[4] if 4 < process.argv.length

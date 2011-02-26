@@ -225,6 +225,8 @@ applyColor = (text, color) ->
       text.bold
     when "italic"
       text.italic
+    when "inverse"
+      text.inverse
     else
       if "object" == typeof color
         for c in color
@@ -263,6 +265,7 @@ exports.colorizeText = (text, matchingPattern=null, done=false) ->
       words = getWord word, stateRe, statePrefix.length
       if words
         uninflectedWord = words[0].bold.underline.green
+        uninflectedWord = uninflectedWord.inverse if done
         word =  words[1]
     else if 0 == word.indexOf tagPrefix
       words = getWord word, tagRe, tagPrefix.length
