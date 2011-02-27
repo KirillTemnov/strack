@@ -99,6 +99,7 @@ class Config
                                              # source files, when auto search todo performs
     @config.sortOrder ||= "asc"              # sort order: "asc" or "desc"
     @config.showLineNumbers ||= "true"       # show line numbers when edit multiline text
+    @config.askBeforeCreateNewTracker ||= "true" # description in option name
 
   ###
   Update config with params
