@@ -21,6 +21,18 @@ sourceOptions =
     multilineCommentEnd: "###"
     escapeStringQuotesRe: [/\\\'/g, /\\\"/g]
     stringRe: [new RegExp("'[^']+'", "g"), new RegExp('"[^"]+"', "g")]
+  py:
+    oneLineComment: "#"
+    multilineCommentStart: null
+    multilineCommentEnd: null
+    escapeStringQuotesRe: [/\\\'/g, /\\\"/g]
+    stringRe: [new RegExp("'[^']+'", "g"), new RegExp('"[^"]+"', "g")]
+  rb:
+    oneLineComment: "#"
+    multilineCommentStart: "=begin"
+    multilineCommentEnd: "=end"
+    escapeStringQuotesRe: [/\\\'/g, /\\\"/g]
+    stringRe: [new RegExp("'[^']+'", "g"), new RegExp('"[^"]+"', "g")]
 
 ###
 Remove strings from line
@@ -57,11 +69,12 @@ extractCommentsText = (line, opts, mlCommentOpen) ->
     else
       [line, true]
   else
+    mlcLength = if opts.multilineCommentStart then opts.multilineCommentStart.length else 0
     if 0 <= mlStart
       if mlStart < mlEnd        # extract one lined multiline comment
-        [line.substring(mlStart + opts.multilineCommentStart.length, mlEnd), false]
+        [line.substring(mlStart + mlcLength, mlEnd), false]
       else                      # extract first line of multiline comment
-        [line.substring(mlStart + opts.multilineCommentStart.length), true]
+        [line.substring(mlStart + mlcLength), true]
     else if 0 <= olComment
       [line.substring(olComment + opts.oneLineComment.length), false]
     else
@@ -95,18 +108,18 @@ exports.addTickets = (file, tags, tracker, config) ->
           for t in tags
             if 0 <= comment.toLowerCase().indexOf t
               if ticketText
-                tracker.addUniqueTicket config, ticketText + "\n..."
+                tracker.addUniqueTicket ticketText + "\n..."
                 ticketText = ""
               else
                 ticketText = comment.trim().replace(t, util.statePrefix + t) + " +auto +" +
-                  path.basename(file) + "\n" + line
+                  util.extractPartialPath(file) + "\n" + line
               curLines = 1
             else if ticketText
               if curLines < linesMax
                 ticketText += "\n" + line
                 curLines++
               else
-                tracker.addUniqueTicket config, ticketText + "\n..."
+                tracker.addUniqueTicket ticketText + "\n..."
                 ticketText = ""
                 curLines = 1
 

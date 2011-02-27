@@ -448,7 +448,6 @@ exports.readOneLine = (prompt="->", fn) ->
   repl.setPrompt prompt
   repl.on  'close',  ->  stdin.destroy()
   repl.on  'line',   (buffer) ->
-    console.log "buffer = #{buffer}"
     fn buffer.toString()
     process.exit 0
   repl.prompt()
@@ -488,3 +487,13 @@ exports.editTextLines = (text, terminator, fn, lineNum=true) ->
 
   repl.prompt()
 
+
+###
+Extract from path filename and several directotires above
+
+@param {String} path Full path to file
+@return {String} filename Filename with some parent diractories
+@api public
+###
+exports.extractPartialPath = (path) ->
+  p.basename(p.dirname(path)) + '/' + p.basename path

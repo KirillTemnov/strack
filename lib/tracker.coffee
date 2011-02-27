@@ -3,6 +3,7 @@ util = require "./util"
 ucs = util.colorizeString
 cFL = util.cutFirstLine
 sys = require "sys"
+path = require "path"
 
 class Tracker
   constructor: (@config) ->
@@ -29,23 +30,27 @@ class Tracker
   @api public
   ###
   load: () ->
-    try
-      filename = "./" + @config.get "trackerFile"
-      @_create JSON.parse fs.readFileSync filename
-    catch err
-      if "EBADF" == err.code
-        @_create()
-        if "yes" == @config.get "askBeforeCreate"
-          @created = no
-          self = @
-          util.readOneLine "create new tracker in this folder (yes/no)?", (answer) ->
-              if  answer.toLowerCase() in ["yes", "y"]
-                self.save()
-        else
-          @save()
-#        fs.writeFileSync filename, JSON.stringify @
-      else
-        throw err
+    preWd = ""
+    cwd = process.cwd()
+    trackerFile = @config.get "trackerFile"
+    while cwd != preWd
+      preWd = cwd
+      cwd = path.dirname cwd
+      try
+        @filename = "#{preWd}/#{trackerFile}"
+        @_create JSON.parse fs.readFileSync @filename
+        return
+      catch err
+    cwd = process.cwd()
+    @filename = "#{cwd}/#{trackerFile}"
+    @_create()
+    if "yes" == @config.get "askBeforeCreate"
+      @created = no
+      self = @
+      util.readOneLine "Create new tracker in #{cwd} (yes/no) ? ", (answer) ->
+          if  answer.toLowerCase() in ["yes", "y"]
+            self.save()
+
 
   ###
   Save tracker file
@@ -54,7 +59,6 @@ class Tracker
   @api public
   ###
   save: () ->
-    filename =  "./" + @config.get "trackerFile"
     states = '"states":' + JSON.stringify @states
     tickStr = '"tickets": {\n'
     tickets = []
@@ -62,7 +66,7 @@ class Tracker
       tickets.push '"' + k + '": ' + JSON.stringify v
     tickStr += tickets.join(", \n") + "\n}"
     data = "{\n#{tickStr},\n#{states}\n}\n"
-    fs.writeFileSync filename, data
+    fs.writeFileSync @filename, data
 
   ###
   Show project states
@@ -284,7 +288,7 @@ class Tracker
     console.log ucs "Created: #{t.created}\n", done, "grey", ""
     console.log ucs "Last modified: #{t.modified}", done, "grey", ""
     console.log util.colorizeText t.text, search, done
-    _showTicketComments t, done
+    @_showTicketComments t, done
     console.log  "\n-----------------------------------------"+
       "---------------------------------------\n"
 
@@ -358,16 +362,16 @@ class Tracker
 
       if null == search || 0 <= t.text.indexOf search
         num = if 36 > i then ucs " ^#{i.toString(36)} ", done, "grey", "" else "    "
+        comments =
+          if 0 < t.comments.length then ucs " [c:#{t.comments.length}]\t", done, "grey", "" else "     \t"
+
         switch @config.get "log"
           when "tiny"
-            console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done}"
+            console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done} " +
+              "\t#{comments}".blue
           when "long"
             @_logOne t, search
           else                  # short of anything else is default
-            comments = if 0 < t.comments.length
-                 ucs " [c:#{t.comments.length}]\t", done, "grey", ""
-               else
-                 "     \t"
             console.log "#{cFL(t.id, 10).yellow}\t" +
                "#{util.colorizeText cFL(t.text, 60), search, done}\t#{num}#{comments}" +
                 ucs "#{util.formatDateTime t.modified}\t#{t.author.user}",
