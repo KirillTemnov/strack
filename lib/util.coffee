@@ -5,8 +5,7 @@ fs = require "fs"
 readline = require "readline"
 p = require "path"
 home = process.env.HOME + "/"
-exports.maxWidth = 100          # todo use this
-sys = require "sys"             # todo remove on release
+
 
 # prefix for states, e.g. @todo, @done
 exports.statePrefix = statePrefix = "@"

@@ -84,29 +84,27 @@ class Tracker
 
   @param {Array} params List of params. First param must be "initial" of "final",
                         rest params are values for initial or final states
-  @param {Object} config Config object
   @api public
   ###
-  updateStates: (params, config) ->
+  updateStates: (params) ->
     if params[0] in ["initial", "final"]
       @states[params[0]] = params[1..]
       @save()
-      console.log "Project #{params[0]} states updated to #{params[1..].join ', '}" if "true" == config.get "verbose"
+      console.log "Project #{params[0]} states updated to #{params[1..].join ', '}" if "true" == @config.get "verbose"
     else
-      console.log "Project states not updated" if "true" == config.get "verbose"
+      console.log "Project states not updated" if "true" == @config.get "verbose"
 
   ###
   Search ticket in tracker
 
   @param {String} ticketId Ticket id starting numbers
-  @param {Object} config Config object
   @return {Array} result Tickets, which have id, strarting from ticketId
   @api private
   ###
-  _searchTicket: (ticketId, config) ->
+  _searchTicket: (ticketId) ->
     result = []
     if ticketId.match /^\^.$/
-      tickets = @_sortTickets config
+      tickets = @_sortTickets()
       id = parseInt ticketId[1], 36
       result.push tickets[id] if id < tickets.length
     else
@@ -120,7 +118,6 @@ class Tracker
   If ticket id is not unique, method throws exception
 
   @param {String} ticketId Ticket id starting numbers
-  @param {Object} config Config object
   @return {Object} ticket Ticket object
   @api public
   ###
@@ -132,78 +129,81 @@ class Tracker
       when 0
         console.log "Ticket with id, starting from '#{id}' not found"
       else
-        console.log "Duplicate tickets with id = #{id} " #(#{sys.inspect tickets})"
+        console.log "Duplicate tickets with id = #{id} "
     process.exit(-1)
 
 
   ###
   Add ticket to tracker
 
-  @param {Object} config Config object
   @param {String} text Text of ticket
   @api public
   ###
-  addTicket: (config, text) ->
+  addTicket: (text) ->
     d = new Date()
     meta = util.parseText text
     t =
       created: d
       modified: d
-      author: config.makeUserDict()
+      author: @config.makeUserDict()
       text: text
-      id: util.createId text, config
+      id: util.createId text, @config
       comments: []
       log: []
     @tickets[t.id] = t
     @save()
-    console.log "You'we added ticket:\n#{text}" if "true" == config.get "verbose"
+    console.log "You'we added ticket:\n#{text}" if "true" == @config.get "verbose"
 
   ###
   Add unique ticket. Check ticket text for unique before adding
 
-  @param {Object} config Config Object
   @param {String} text Text of ticket
   @api public
   ###
-  addUniqueTicket: (config, text) ->
+  addUniqueTicket: (text) ->
     for id, t of @tickets
       if text.split("\n")[0] == t.text.split("\n")[0]
-        console.log "Add duplicate ticket declined" if "true" == config.get "verbose"
+        console.log "Add duplicate ticket declined" if "true" == @config.get "verbose"
         return
-    @addTicket config, text
+    @addTicket text
 
   ###
   Remove ticket from tracker.
 
   @param {String} id Ticket id  starting numbers
-  @param {Object} config Config object
+  @api public
   ###
-  removeTicket: (id, config) ->
-    t = @getSingleTicket id, config
+  removeTicket: (id) ->
+    t = @getSingleTicket id
     delete @tickets[t.id]
     @save()
-    console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
+    console.log "Ticket with #{id.yellow} removed"  if "true" == @config.get "verbose"
 
-  removeTickets: (idList, config) ->
+  ###
+  Remove tickets in list
+
+  @param {Array} idList List of ids that must to deleted
+  @api public
+  ###
+  removeTickets: (idList) ->
     for id in idList
       try
-        t = @getSingleTicket id, config
+        t = @getSingleTicket id
         delete @tickets[t.id]
-        console.log "Ticket with #{id.yellow} removed"  if "true" == config.get "verbose"
+        console.log "Ticket with #{id.yellow} removed"  if "true" == @config.get "verbose"
       catch err
     @save()
 
   ###
   Change ticket text
 
-  @param {Object} config Config Object
   @param {String} ticketId Ticket id
   @param {Object} text New ticket text
   @api public
   ###
-  changeTicket: (config, id, text) ->
-    t = @getSingleTicket id, config
-    t.author = config.makeUserDict()
+  changeTicket: (id, text) ->
+    t = @getSingleTicket id
+    t.author = @config.makeUserDict()
     t.text = text
     @updateTicket t
 
@@ -223,18 +223,17 @@ class Tracker
 
   @param {String} ticketId Ticket id
   @param {Object} comment Comment text
-  @param {Object} config Config Object
   @api public
   ###
-  commentTicket: (id, comment, config) ->
-    t = @getSingleTicket id, config
+  commentTicket: (id, comment) ->
+    t = @getSingleTicket id
     t.comments.push {
         date: new Date()
-        author: config.makeUserDict()
+        author: @config.makeUserDict()
         comment: comment
-        id: util.createId comment, config}
+        id: util.createId comment, @config}
       @updateTicket t
-    console.log "You add a comment:\n#{comment}"  if "true" == config.get "verbose"
+    console.log "You add a comment:\n#{comment}"  if "true" == @config.get "verbose"
 
   ###
   Show commnets on ticket
@@ -251,13 +250,12 @@ class Tracker
 
   @param {String} ticketId Ticket id
   @param {String} newState New State value
-  @param {Object} config Config object
   @api public
   ###
-  changeState: (id, newState, config) ->
+  changeState: (id, newState) ->
     if 0 == newState.indexOf util.statePrefix
-      t = @getSingleTicket id, config
-      console.log "State of: #{t.text}\nchanged to #{newState}"  if "true" == config.get "verbose"
+      t = @getSingleTicket id
+      console.log "State of: #{t.text}\nchanged to #{newState}"  if "true" == @config.get "verbose"
       t.text = util.replaceState t.text, newState
       t.modified = new Date()
       @updateTicket t
@@ -266,23 +264,21 @@ class Tracker
   ###
   Show info on ticket
 
-  @param {Object} config Config object
   @param {String} ticketId Ticket id
   @api public
   ###
-  info: (id, config) ->
-    @_logOne @getSingleTicket(id, config), null, config
+  info: (id) ->
+    @_logOne @getSingleTicket(id), null
 
   ###
   Log one ticket full info
 
   @param {Object} ticket Ticket object
   @param {String} search Search string, default null
-  @param {Object} config Config object
   @api private
   ###
-  _logOne: (t, search=null, config) ->
-    done = util.getState(t.text, config) in @states.final
+  _logOne: (t, search=null) ->
+    done = util.getState(t.text, @config) in @states.final
     console.log ucs "Ticket: #{t.id.yellow}", done, "grey", ""
     console.log ucs "Author: #{t.author.user} <#{t.author.email}>", done, "grey", ""
     console.log ucs "Created: #{t.created}\n", done, "grey", ""
@@ -311,18 +307,17 @@ class Tracker
   ###
   Sort tickets
 
-  @param {Object} config Config object.
   @return {Array} tickets Tickets, sorted by asc or desc, depends on config "sortOrder" option
   @api private
   ###
-  _sortTickets: (config) ->
+  _sortTickets: () ->
     tickets = []
     for id, t of @tickets
-      t.state = util.getState t.text, config
+      t.state = util.getState t.text, @config
       tickets.push t
 
     [pos, neg] = [1, -1]
-    if "desc" == config.get "sortOrder"
+    if "desc" == @config.get "sortOrder"
       [pos, neg] = [neg, pos]
     states = @states
     tickets.sort (t1, t2) ->
@@ -345,26 +340,25 @@ class Tracker
   Log + search tickets
 
   @param {String} search Search string, default null
-  @param {Object} config Config object
   @api public
   ###
-  log: (search=null, config) ->
+  log: (search=null) ->
     stat = todo:0, done: 0   if null == search
     i = -1
-    for t in @_sortTickets config
+    for t in @_sortTickets()
       i++
-      state = util.getState t.text, config
+      state = util.getState t.text, @config
       done = state in @states.final
       if stat         # statistics
         if done
           stat.done++
-          continue if "false" == config.get "showDone"
+          continue if "false" == @config.get "showDone"
         else
           stat.todo++
 
       if null == search || 0 <= t.text.indexOf search
         num = if 36 > i then ucs " ^#{i.toString(36)} ", done, "grey", "" else "    "
-        switch config.get "log"
+        switch @config.get "log"
           when "tiny"
             console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done}"
           when "long"

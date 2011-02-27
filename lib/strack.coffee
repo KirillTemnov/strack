@@ -75,13 +75,13 @@ exports.run = ->
       when "add", "a"
         if 3 < process.argv.length
           data = process.argv[3..]
-          tracker.addTicket config, data.join " "
+          tracker.addTicket data.join " "
         else
           util.readText config.get("eof"), (data) ->
-            tracker.addTicket config, data
+            tracker.addTicket data
       when "edit", "e"
         if 3 < process.argv.length
-          t = tracker.getSingleTicket process.argv[3], config
+          t = tracker.getSingleTicket process.argv[3]
           util.editTextLines t.text, config.get("eof"),  ((text) ->
             if text
               t.text = text
@@ -102,7 +102,7 @@ exports.run = ->
           config.dump()
       when "log", "l" # log all or by tag (log + grep!)
         word = process.argv[3] if 3 < process.argv.length
-        tracker.log word, config
+        tracker.log word
       when "done", "d"
         if 4 < process.argv.length
           # replace state
@@ -110,12 +110,12 @@ exports.run = ->
           id = process.argv[4]
           if 0 == id.indexOf util.statePrefix
             [state, id] = [id, state]
-          tracker.changeState id, state, config
+          tracker.changeState id, state
         else
           console.log "To change state add id and new state"
       when "states", "st"
         if 4 < process.argv.length
-          tracker.updateStates process.argv[3..], config
+          tracker.updateStates process.argv[3..]
         else
           tracker.showStates process.argv[3]
       when "info", "i"
@@ -125,22 +125,22 @@ exports.run = ->
             id = "^" + id.substring 1
             tracker.showComments id
           else
-            tracker.info id, config
+            tracker.info id
         else
           console.log "Add id for ticket "
       when "remove", "r", "rm"
         if 3 < process.argv.length
           ids = process.argv[3..]
-          tracker.removeTickets ids, config
+          tracker.removeTickets ids
       when "comment", "c"
         id = process.argv[3] if 3 < process.argv.length
         if id
           comment = process.argv[4..].join " "if 4 < process.argv.length
           if !comment
             util.readText config.get("eof"), (comment) ->
-              tracker.commentTicket id, comment, config
+              tracker.commentTicket id, comment
           else
-             tracker.commentTicket id, comment, config,
+             tracker.commentTicket id, comment
         else
           console.log "Ticket id is missing"
       when "help", "h"
@@ -153,7 +153,7 @@ exports.run = ->
         util.listDir(process.cwd(), ext).forEach (file) -> parser.addTickets file, tags, tracker, config
       when "touch", "t"
         if 3 < process.argv.length
-          t = tracker.getSingleTicket process.argv[3], config
+          t = tracker.getSingleTicket process.argv[3]
           t.modified = new Date()
           tracker.updateTicket t
         else
