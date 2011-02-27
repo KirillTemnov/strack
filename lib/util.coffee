@@ -71,7 +71,7 @@ class Config
             else if 0 == line.indexOf "email"
               @config.email = line.split("=")[1].trim()
         catch err2
-          @config.user = config.user || process.env.USER
+          @config.user = config.user
           @config.email = config.email ||  ""
           @_writeDefaults()
         fs.writeFileSync @configFile,  JSON.stringify @config
@@ -84,15 +84,21 @@ class Config
   @api private
   ###
   _writeDefaults: ->
-    @config.log ||= "short"
-    @config.secret ||= createId @config.user
-    @config.defaultState ||= "todo"
-    @config.showDoneTasks ||= "false"
-    @config.eof ||= ".."
-    @config.verbose || = "true"
-    @config.maxlinesAfterState ||= "3"
-    @config.sortOrder ||= "asc"
-    @config.showLineNumbers ||= "true"
+    @config.user ||= process.env.USER
+    if ! @config.email
+      console.warn "User email not set!, please add email by executing\nstrack cf email ".red +
+      "your@email.here".red
+
+    @config.log ||= "short"                  # log format. one of "tiny", "short", "long"
+    @config.secret ||= createId @config.user # secret key for generate hash values
+    @config.defaultState ||= "todo"          # default state
+    @config.showDone ||= "false"             # show done tasks
+    @config.eof ||= ".."                     # end of file, when add/edit multiline text
+    @config.verbose || = "true"              # verbose mode
+    @config.maxlinesAfterState ||= "3"       # max lines, that read after founded state in
+                                             # source files, when auto search todo performs
+    @config.sortOrder ||= "asc"              # sort order: "asc" or "desc"
+    @config.showLineNumbers ||= "true"       # show line numbers when edit multiline text
 
   ###
   Update config with params

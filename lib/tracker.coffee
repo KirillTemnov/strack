@@ -321,12 +321,12 @@ class Tracker
       if stat         # statistics
         if done
           stat.done++
-          continue if "false" == config.get "showDonedTasks"
+          continue if "false" == config.get "showDone"
         else
           stat.todo++
 
       if null == search || 0 <= t.text.indexOf search
-        num = if 36 > i then util.colorizeString " ^#{i.toString(16)} ", done, "grey", "" else "    "
+        num = if 36 > i then util.colorizeString " ^#{i.toString(36)} ", done, "grey", "" else "    "
         switch config.get "log"
           when "tiny"
             console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done}"

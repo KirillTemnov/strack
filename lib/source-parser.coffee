@@ -6,7 +6,7 @@ path = require "path"
 util = require "./util"
 
 ###
-todo Add more languages for parsing
+Options for various programming languages
 ###
 sourceOptions =
   js:
