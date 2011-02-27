@@ -60,96 +60,96 @@ showHelp = ->
 
 exports.run = ->
   config = new util.Config()
-  tracker = new Tracker()
+  tracker = new Tracker(config)
   tracker.load()
 
-
-  switch process.argv[2]
-    when "init"
-      "clean Tracker"
-      # create file with tickets and id's
-      # write files to .gitignore
-    when "add", "a"
-      if 3 < process.argv.length
-        data = process.argv[3..]
-        tracker.addTicket config, data.join " "
-      else
-        util.readText config.get("eof"), (data) ->
-          tracker.addTicket config, data
-    when "edit", "e"
-      if 3 < process.argv.length
-        t = tracker.getSingleTicket process.argv[3], config
-        util.editTextLines t.text, config.get("eof"),  ((text) ->
-          if text
-            t.text = text
-            tracker.updateTicket t), config.get "showLineNumbers"
-      else
-        console.log "To edit state text add id"
-    when "config", "cf"
-      key = process.argv[3] if 3 < process.argv.length
-      if key
-        value = process.argv[4] if 4 < process.argv.length
-        if value                # set new value
-          param = {}
-          param[key] = value
-          config.update param
-        else                    # show key value
-          console.log "#{key} = #{config.get key}"
-      else                      # dump all settings
-        config.dump()
-    when "log", "l" # log all or by tag (log + grep!)
-      word = process.argv[3] if 3 < process.argv.length
-      tracker.log word, config
-    when "done", "d"
-      if 4 < process.argv.length
-        # replace state
-        state = process.argv[3]
-        id = process.argv[4]
-        if 0 == id.indexOf util.statePrefix
-          [state, id] = [id, state]
-        tracker.changeState id, state, config
-      else
-        console.log "To change state add id and new state"
-    when "states", "st"
-      if 4 < process.argv.length
-        tracker.updateStates process.argv[3..], config
-      else
-        tracker.showStates process.argv[3]
-    when "info", "i"
-      if 3 < process.argv.length
-        id = process.argv[3]
-        tracker.info id, config
-      else
-        console.log "Add id for ticket "
-    when "remove", "r", "rm"
-      if 3 < process.argv.length
-        ids = process.argv[3..]
-        tracker.removeTickets ids, config
-    when "comment", "c"
-      id = process.argv[3] if 3 < process.argv.length
-      if id
-        comment = process.argv[4..].join " "if 4 < process.argv.length
-        if !comment
-          util.readText config.get("eof"), (comment) ->
-            tracker.commentTicket id, comment, config
+  if tracker.created
+    switch process.argv[2]
+      when "init"
+        "clean Tracker"
+        # create file with tickets and id's
+        # write files to .gitignore
+      when "add", "a"
+        if 3 < process.argv.length
+          data = process.argv[3..]
+          tracker.addTicket config, data.join " "
         else
-           tracker.commentTicket id, comment, config,
+          util.readText config.get("eof"), (data) ->
+            tracker.addTicket config, data
+      when "edit", "e"
+        if 3 < process.argv.length
+          t = tracker.getSingleTicket process.argv[3], config
+          util.editTextLines t.text, config.get("eof"),  ((text) ->
+            if text
+              t.text = text
+              tracker.updateTicket t), config.get "showLineNumbers"
+        else
+          console.log "To edit state text add id"
+      when "config", "cf"
+        key = process.argv[3] if 3 < process.argv.length
+        if key
+          value = process.argv[4] if 4 < process.argv.length
+          if value                # set new value
+            param = {}
+            param[key] = value
+            config.update param
+          else                    # show key value
+            console.log "#{key} = #{config.get key}"
+        else                      # dump all settings
+          config.dump()
+      when "log", "l" # log all or by tag (log + grep!)
+        word = process.argv[3] if 3 < process.argv.length
+        tracker.log word, config
+      when "done", "d"
+        if 4 < process.argv.length
+          # replace state
+          state = process.argv[3]
+          id = process.argv[4]
+          if 0 == id.indexOf util.statePrefix
+            [state, id] = [id, state]
+          tracker.changeState id, state, config
+        else
+          console.log "To change state add id and new state"
+      when "states", "st"
+        if 4 < process.argv.length
+          tracker.updateStates process.argv[3..], config
+        else
+          tracker.showStates process.argv[3]
+      when "info", "i"
+        if 3 < process.argv.length
+          id = process.argv[3]
+          tracker.info id, config
+        else
+          console.log "Add id for ticket "
+      when "remove", "r", "rm"
+        if 3 < process.argv.length
+          ids = process.argv[3..]
+          tracker.removeTickets ids, config
+      when "comment", "c"
+        id = process.argv[3] if 3 < process.argv.length
+        if id
+          comment = process.argv[4..].join " "if 4 < process.argv.length
+          if !comment
+            util.readText config.get("eof"), (comment) ->
+              tracker.commentTicket id, comment, config
+          else
+             tracker.commentTicket id, comment, config,
+        else
+          console.log "Ticket id is missing"
+      when "help", "h"
+        showHelp()
+      when "fs"                   #from source
+        ext = "." + if 3 < process.argv.length then process.argv[3].toLowerCase() else "js"
+        tags =  if 4 < process.argv.length then process.argv[4..] else [config.get "defaultState"]
+        filteredTags = []
+        tags.forEach (tag) -> filteredTags.push tag.toLowerCase()
+        util.listDir(process.cwd(), ext).forEach (file) -> parser.addTickets file, tags, tracker, config
+      when "touch", "t"
+        if 3 < process.argv.length
+          t = tracker.getSingleTicket process.argv[3], config
+          t.modified = new Date()
+          tracker.updateTicket t
+        else
+          console.log "Ticket id is missing"
       else
-        console.log "Ticket id is missing"
-    when "help", "h"
-      showHelp()
-    when "fs"                   #from source
-      ext = "." + if 3 < process.argv.length then process.argv[3].toLowerCase() else "js"
-      tags =  if 4 < process.argv.length then process.argv[4..] else [config.get "defaultState"]
-      filteredTags = []
-      tags.forEach (tag) -> filteredTags.push tag.toLowerCase()
-      util.listDir(process.cwd(), ext).forEach (file) -> parser.addTickets file, tags, tracker, config
-    when "touch", "t"
-      if 3 < process.argv.length
-        t = tracker.getSingleTicket process.argv[3], config
-        t.modified = new Date()
-        tracker.updateTicket t
-      else
-        console.log "Ticket id is missing"
-    else
-      console.log usage
+        console.log usage

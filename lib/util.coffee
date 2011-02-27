@@ -43,7 +43,7 @@ Class for set or set config flags
 ###
 class Config
   ###
-  Load config. Loads config from ~/.strack.json
+  Load config. Loads config from ~/.strack
   If config file not exists, create it.
   Try to gather user name and email from ~/.gitconfig, if
   file not exists, get user from process.env.USER
@@ -53,7 +53,7 @@ class Config
   ###
   constructor: ->
     try
-      @configFile = home + ".strack.json"
+      @configFile = home + ".strack"
       fs.statSync @configFile
       @config = JSON.parse fs.readFileSync @configFile
       @_writeDefaults()
@@ -99,7 +99,8 @@ class Config
                                              # source files, when auto search todo performs
     @config.sortOrder ||= "asc"              # sort order: "asc" or "desc"
     @config.showLineNumbers ||= "true"       # show line numbers when edit multiline text
-    @config.askBeforeCreateNewTracker ||= "true" # description in option name
+    @config.trackerFile ||= ".strack"        # tracker file name
+    @config.askBeforeCreate ||= "yes"        # ask before create new tracker
 
   ###
   Update config with params
@@ -433,6 +434,24 @@ exports.readText = (terminator, fn) ->
     repl.setPrompt "   "
     repl.prompt()
 
+  repl.prompt()
+
+###
+Read one line and make call of fn with this line
+
+@param {String} prompt Prompt, default "->"
+@param {Function} fn Callback function
+###
+exports.readOneLine = (prompt="->", fn) ->
+  stdin  = process.openStdin()
+  stdout = process.stdout
+  repl = readline.createInterface stdin, stdout #, complete
+  repl.setPrompt prompt
+  repl.on  'close',  ->  stdin.destroy()
+  repl.on  'line',   (buffer) ->
+    console.log "buffer = #{buffer}"
+    fn buffer.toString()
+    process.exit 0
   repl.prompt()
 
 ###

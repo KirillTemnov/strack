@@ -1,12 +1,12 @@
 fs = require "fs"
-trackerFile = ".track.json"
 util = require "./util"
 cFL = util.cutFirstLine
 sys = require "sys"
 
 class Tracker
-  constructor: (params) ->
-    @_create params
+  constructor: (@config) ->
+    @_create()
+    @created = yes
 
   ###
   Create new object from params
@@ -27,14 +27,22 @@ class Tracker
   @param {String} filename Path to tracker file
   @api public
   ###
-  load: (filename) ->
+  load: () ->
     try
-      filename ||= "./" + trackerFile
+      filename = "./" + @config.get "trackerFile"
       @_create JSON.parse fs.readFileSync filename
     catch err
       if "EBADF" == err.code
         @_create()
-        fs.writeFileSync filename, JSON.stringify @
+        if "yes" == @config.get "askBeforeCreate"
+          @created = no
+          self = @
+          util.readOneLine "create new tracker in this folder (yes/no)?", (answer) ->
+              if  answer.toLowerCase() in ["yes", "y"]
+                self.save()
+        else
+          @save()
+#        fs.writeFileSync filename, JSON.stringify @
       else
         throw err
 
@@ -44,8 +52,8 @@ class Tracker
   @param {String} filename Path to tracker file
   @api public
   ###
-  save: (filename) ->
-    filename ||=  "./" + trackerFile
+  save: () ->
+    filename =  "./" + @config.get "trackerFile"
     states = '"states":' + JSON.stringify @states
     tickStr = '"tickets": {\n'
     tickets = []
