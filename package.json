@@ -1,6 +1,6 @@
 { "name": "strack",
   "description": "Track issues/bugs on project.",
-  "version": "0.4.9a",
+  "version": "0.4.9",
   "bin": { "strack" : "./bin/strack.js", "s": "./bin/strack.js"},
   "main": "./lib/strack.js",
   "scripts": {"preinstall": "make all"},

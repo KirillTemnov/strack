@@ -1,5 +1,6 @@
 fs = require "fs"
 util = require "./util"
+ucs = util.colorizeString
 cFL = util.cutFirstLine
 sys = require "sys"
 
@@ -123,8 +124,8 @@ class Tracker
   @return {Object} ticket Ticket object
   @api public
   ###
-  getSingleTicket: (id, config) ->
-    tickets = @_searchTicket id, config
+  getSingleTicket: (id) ->
+    tickets = @_searchTicket id, @config
     switch tickets.length
       when 1
         return tickets[0]
@@ -236,6 +237,16 @@ class Tracker
     console.log "You add a comment:\n#{comment}"  if "true" == config.get "verbose"
 
   ###
+  Show commnets on ticket
+
+  @param {String} ticketId Ticket id
+  @api public
+  ###
+  showComments: (id) ->
+    t = @getSingleTicket id
+    @_showTicketComments t, util.getState(t.text, @config) in @states.final
+
+  ###
   Change ticket state
 
   @param {String} ticketId Ticket id
@@ -272,17 +283,29 @@ class Tracker
   ###
   _logOne: (t, search=null, config) ->
     done = util.getState(t.text, config) in @states.final
-    console.log util.colorizeString "Ticket: #{t.id.yellow}", done, "grey", ""
-    console.log util.colorizeString "Author: #{t.author.user} <#{t.author.email}>", done, "grey", ""
-    console.log util.colorizeString "Created: #{t.created}\n", done, "grey", ""
-    console.log util.colorizeString "Last modified: #{t.modified}", done, "grey", ""
+    console.log ucs "Ticket: #{t.id.yellow}", done, "grey", ""
+    console.log ucs "Author: #{t.author.user} <#{t.author.email}>", done, "grey", ""
+    console.log ucs "Created: #{t.created}\n", done, "grey", ""
+    console.log ucs "Last modified: #{t.modified}", done, "grey", ""
     console.log util.colorizeText t.text, search, done
+    _showTicketComments t, done
+    console.log  "\n-----------------------------------------"+
+      "---------------------------------------\n"
+
+  ###
+  Show comments on ticket
+
+  @param {Object} t Ticket object
+  @param {Boolean} done Is ticket done
+  ###
+  _showTicketComments: (t, done) ->
     if 0 < t.comments.length
-      console.log util.colorizeString "\nComments:\n",  done, "grey", ""
-    for c in t.comments
-      console.log util.colorizeString "#{c.author.user} <#{c.author.email}> :", done, "grey", ""
-      console.log util.colorizeString c.comment,  done, "grey", ""
-    console.log  "\n--------------------------------------------------------------------------------\n"
+      console.log ucs "\nComments:\n",  done, "grey", ""
+      for c in t.comments
+        console.log ucs "#{c.author.user} <#{c.author.email}> :", done, "grey", ""
+        console.log ucs c.comment,  done, "grey", ""
+    else
+      console.log "No comments"
 
 
   ###
@@ -340,7 +363,7 @@ class Tracker
           stat.todo++
 
       if null == search || 0 <= t.text.indexOf search
-        num = if 36 > i then util.colorizeString " ^#{i.toString(36)} ", done, "grey", "" else "    "
+        num = if 36 > i then ucs " ^#{i.toString(36)} ", done, "grey", "" else "    "
         switch config.get "log"
           when "tiny"
             console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done}"
@@ -348,12 +371,12 @@ class Tracker
             @_logOne t, search
           else                  # short of anything else is default
             comments = if 0 < t.comments.length
-                 util.colorizeString " [c:#{t.comments.length}]\t", done, "grey", ""
+                 ucs " [c:#{t.comments.length}]\t", done, "grey", ""
                else
                  "     \t"
             console.log "#{cFL(t.id, 10).yellow}\t" +
                "#{util.colorizeText cFL(t.text, 60), search, done}\t#{num}#{comments}" +
-                util.colorizeString "#{util.formatDateTime t.modified}\t#{t.author.user}",
+                ucs "#{util.formatDateTime t.modified}\t#{t.author.user}",
                   done, "grey", ""
     if null == search
       total = stat.todo + stat.done

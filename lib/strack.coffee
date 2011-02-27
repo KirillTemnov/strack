@@ -8,6 +8,8 @@ Usage:
 
 strack [COMMAND] args
 
+id field in commands may be replaced by shortuts ^0-^9 and ^a-^z
+
 strack commands and aliases:
   add, a\tAdd new ticket/task
   config, cf\tWork with config options
@@ -37,7 +39,8 @@ showHelp = ->
     when "comment", "c"
       console.log "strack #{v} id [comment]\n\n  Comment ticket/task\n  For input multiline comment, omit comment parameter\n"
     when "info", "i"
-      console.log "strack #{v} id\n\n  Show detail information about ticket/task\n"
+      console.log "strack #{v} id\n\n  Show detail information about ticket/task\n  " +
+        "Add . and shortcut symbol (0-z) to see only comments on ticket/task.\n"
     when "log", "l"
       console.log "strack #{v} [pattern]\n\n  Show tracker log\n  If pattern is set, only tasks, that match this pattern will be displayed\n"
     when "remove", "rm"
@@ -118,7 +121,11 @@ exports.run = ->
       when "info", "i"
         if 3 < process.argv.length
           id = process.argv[3]
-          tracker.info id, config
+          if "." == id[0]       # show comments
+            id = "^" + id.substring 1
+            tracker.showComments id
+          else
+            tracker.info id, config
         else
           console.log "Add id for ticket "
       when "remove", "r", "rm"
