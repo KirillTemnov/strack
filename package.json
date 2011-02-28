@@ -3,7 +3,7 @@
   "version": "0.5.1b",
   "bin": { "strack" : "./bin/strack.js", "s": "./bin/strack.js"},
   "main": "./lib/strack.js",
-  "scripts": {"preinstall": "make install"},
+  "scripts": {"postinstall": "make all"},
   "dependencies": {"colors": ">=0.3", "coffee-script": ">= 1.0.1"},
   "engines": ["node >= 0.3.1"],
   "author": "Temnov Kirill <allselead@gmail.com>",
