@@ -100,6 +100,7 @@ class Config
     @config.showLineNumbers ||= "true"       # show line numbers when edit multiline text
     @config.trackerFile ||= ".strack"        # tracker file name
     @config.askBeforeCreate ||= "yes"        # ask before create new tracker
+    @config.useZebra ||= "yes"               # use zebra to mark short links
 
   ###
   Update config with params

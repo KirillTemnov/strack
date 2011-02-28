@@ -1,6 +1,7 @@
 fs = require "fs"
 util = require "./util"
 ucs = util.colorizeString
+uct = util.colorizeText
 cFL = util.cutFirstLine
 sys = require "sys"
 path = require "path"
@@ -260,7 +261,8 @@ class Tracker
     if 0 == newState.indexOf util.statePrefix
       t = @getSingleTicket id
       console.log "State of: #{t.text}\nchanged to #{newState}"  if "true" == @config.get "verbose"
-      t.text = util.replaceState t.text, newState
+      text = util.replaceState t.text, newState
+      t.text = if text != t.text then text else "#{newState} #{text}"
       t.modified = new Date()
       @updateTicket t
 
@@ -287,7 +289,7 @@ class Tracker
     console.log ucs "Author: #{t.author.user} <#{t.author.email}>", done, "grey", ""
     console.log ucs "Created: #{t.created}\n", done, "grey", ""
     console.log ucs "Last modified: #{t.modified}", done, "grey", ""
-    console.log util.colorizeText t.text, search, done
+    console.log uct t.text, search, done
     @_showTicketComments t, done
     console.log  "\n-----------------------------------------"+
       "---------------------------------------\n"
@@ -362,18 +364,20 @@ class Tracker
 
       if null == search || 0 <= t.text.indexOf search
         num = if 36 > i then ucs " ^#{i.toString(36)} ", done, "grey", "" else "    "
+        num = num.green.inverse.bold if "yes" == @config.get("useZebra") && 0 == i % 2
+
         comments =
           if 0 < t.comments.length then ucs " [c:#{t.comments.length}]\t", done, "grey", "" else "     \t"
-
         switch @config.get "log"
           when "tiny"
-            console.log "#{num}\t#{util.colorizeText cFL(t.text, 60), null, done} " +
+            console.log "#{num}\t#{uct cFL(t.text, 60), null, done} " +
               "\t#{comments}".blue
           when "long"
             @_logOne t, search
           else                  # short of anything else is default
-            console.log "#{cFL(t.id, 10).yellow}\t" +
-               "#{util.colorizeText cFL(t.text, 60), search, done}\t#{num}#{comments}" +
+            id = cFL(t.id, 10).yellow  # todo +feature move width to settings
+            id = id.inverse.bold if "yes" == @config.get("useZebra") && 0 == i % 2
+            console.log "#{id}#{num}\t#{uct cFL(t.text, 60), search, done}\t#{comments}" +
                 ucs "#{util.formatDateTime t.modified}\t#{t.author.user}",
                   done, "grey", ""
     if null == search
