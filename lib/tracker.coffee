@@ -236,6 +236,7 @@ class Tracker
         date: new Date()
         author: @config.makeUserDict()
         comment: comment
+        sign: util.sign comment, @config
         id: util.createId comment, @config}
       @updateTicket t
     console.log "You add a comment:\n#{comment}"  if "true" == @config.get "verbose"

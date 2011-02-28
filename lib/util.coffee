@@ -17,6 +17,17 @@ tagRe = new RegExp "^\\+(\\S+)"
 separatorCharsRe =  new RegExp "([^:,.+\\-!@#&=]+)"
 
 ###
+Sign string with username and email
+
+@param {String} str Source string
+@param {Object} config Config object
+@return {String} hash Hex digest hash
+@api public
+###
+exports.sign = (message, config) ->
+  createHash str + config.get("user") + config.get("email"), config.get("secret")
+
+###
 Create hash from string
 
 @param {String} str Source string
