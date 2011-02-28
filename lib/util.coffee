@@ -52,7 +52,7 @@ class Config
   ###
   constructor: ->
     try
-      @configFile = home + ".strack"
+      @configFile = home + ".strackrc"
       fs.statSync @configFile
       @config = JSON.parse fs.readFileSync @configFile
       @_writeDefaults()
