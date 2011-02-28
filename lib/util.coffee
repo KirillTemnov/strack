@@ -70,8 +70,6 @@ class Config
             else if 0 == line.indexOf "email"
               @config.email = line.split("=")[1].trim()
         catch err2
-          @config.user = config.user
-          @config.email = config.email ||  ""
           @_writeDefaults()
         fs.writeFileSync @configFile,  JSON.stringify @config
       else

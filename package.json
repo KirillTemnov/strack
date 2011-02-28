@@ -1,6 +1,6 @@
 { "name": "strack",
   "description": "Console task tracking and bugtracking system.",
-  "version": "0.5.1",
+  "version": "0.5.1a",
   "bin": { "strack" : "./bin/strack.js", "s": "./bin/strack.js"},
   "main": "./lib/strack.js",
   "scripts": {"preinstall": "make all"},
