@@ -54,7 +54,6 @@ class Tracker
           if  answer.toLowerCase() in ["yes", "y"]
             self.save()
 
-
   ###
   Save tracker file
 
@@ -242,13 +241,31 @@ class Tracker
         id: util.createId comment, @config}
 
     comment.sign = @_signComment comment
-#    comment.sign = util.sign comment + d.toString() + comment.id, @config
     t.comments.push comment
     @updateTicket t
-    console.log "You add a comment:\n#{comment}"  if "true" == @config.get "verbose"
+    console.log "You add a comment:\n#{comment.comment}"  if "true" == @config.get "verbose"
 
+  ###
+  Sign comment
+
+  @param {Object} comment Comment object
+  @return {String} signature Comment signature
+  @api private
+  ###
   _signComment: (c) ->
     util.sign c.comment + c.id, @config
+
+  canEditComment: (id, cid) ->
+    commLst = @getComment id, cid
+    if commLst
+      [ticket, id] = commLst
+      c = ticket.comments[id]
+      d = new Date()
+      cdate = new Date Date.parse c.date
+      return @editTimeLimit >  d - cdate && c.sign == @_signComment c
+
+    return no
+
 
   ###
   Update comment on ticket
@@ -270,7 +287,7 @@ class Tracker
       else
         sign = @_signComment c
         if sign == c.sign
-          c.date = d
+          c.edited = d
           c.comment = newComment
           c.sign = @_signComment c
         else

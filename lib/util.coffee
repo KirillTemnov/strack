@@ -509,6 +509,15 @@ exports.extractPartialPath = (path) ->
   p.basename(p.dirname(path)) + '/' + p.basename path
 
 
+###
+Colorize comment number for detail info
+
+@param {Number} num Ordered comment number
+@param {String} id Comment id
+@param {Number} len Max length of comment id, default - 12
+@return {String} result Formated string with comment number and id
+@api public
+###
 exports.colorizeCommentNumber = (num, id, len=12) ->
   n = num
   num = if num < 36 then " ^#{num} " else "    "

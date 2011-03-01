@@ -88,17 +88,15 @@ exports.run = ->
             commentList = tracker.getComment id, cid
             if commentList      # comment found?
               [ticket, cId] = commentList
-              c = ticket.comments[cId].comment
-              cdate = new Date Date.parse c.date
-              d = new Date()
-              diff = d - cdate
-              if tracker.editTimeLimit < diff   # still can edit?
-                console.log "Error, edit time limit exceed"
-              else              # ok than!
-                util.editTextLines c, config.get("eof"),
-                  ((text) ->
-                    if text
-                      tracker.updateComment id, cid, text), config.get "showLineNumbers"
+              c = ticket.comments[cId]
+
+              if tracker.canEditComment id, cid              # ok
+                 util.editTextLines c.comment, config.get("eof"),
+                   ((text) ->
+                     if text
+                       tracker.updateComment id, cid, text), config.get "showLineNumbers"
+              else
+                console.log "You can't edit this comment"
             else
               console.log "Invalid comment id (#{cid})"
           else                  # edit ticket
