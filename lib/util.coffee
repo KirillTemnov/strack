@@ -24,7 +24,7 @@ Sign string with username and email
 @return {String} hash Hex digest hash
 @api public
 ###
-exports.sign = (message, config) ->
+exports.sign = (str, config) ->
   createHash str + config.get("user") + config.get("email"), config.get("secret")
 
 ###
@@ -507,3 +507,11 @@ Extract from path filename and several directotires above
 ###
 exports.extractPartialPath = (path) ->
   p.basename(p.dirname(path)) + '/' + p.basename path
+
+
+exports.colorizeCommentNumber = (num, id, len=12) ->
+  n = num
+  num = if num < 36 then " ^#{num} " else "    "
+  num = num.green.inverse if 0 == n % 2
+  id = id.substring(0, len).yellow
+  return "#{num} #{id}"

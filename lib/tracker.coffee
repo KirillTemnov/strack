@@ -2,12 +2,14 @@ fs = require "fs"
 util = require "./util"
 ucs = util.colorizeString
 uct = util.colorizeText
-cFL = util.cutFirstLine
+ccn = util.colorizeCommentNumber
+cfl = util.cutFirstLine
 sys = require "sys"
 path = require "path"
 
 class Tracker
   constructor: (@config) ->
+    @editTimeLimit = 15 * 60000 # 15 minutes
     @_create()
     @created = yes
 
@@ -227,19 +229,77 @@ class Tracker
   Comment ticket
 
   @param {String} ticketId Ticket id
-  @param {Object} comment Comment text
+  @param {String} comment Comment text
   @api public
   ###
-  commentTicket: (id, comment) ->
+  commentTicket: (id, text) ->
     t = @getSingleTicket id
-    t.comments.push {
-        date: new Date()
+    d = new Date()
+    comment = {
+        date: d
         author: @config.makeUserDict()
-        comment: comment
-        sign: util.sign comment, @config
+        comment: text
         id: util.createId comment, @config}
-      @updateTicket t
+
+    comment.sign = @_signComment comment
+#    comment.sign = util.sign comment + d.toString() + comment.id, @config
+    t.comments.push comment
+    @updateTicket t
     console.log "You add a comment:\n#{comment}"  if "true" == @config.get "verbose"
+
+  _signComment: (c) ->
+    util.sign c.comment + c.id, @config
+
+  ###
+  Update comment on ticket
+
+  @param {String} ticketId Ticket id
+  @param {String} cid Commetn id
+  @param {String} newComment New comment
+  @api public
+  ###
+  updateComment: (id, cid, newComment) ->
+    comLst = @getComment id, cid
+    if comLst
+      [t, i] = comLst
+      c = t.comments[i]
+      d = new Date()
+      cdate = new Date Date.parse c.date
+      if @editTimeLimit <  d - cdate
+        throw new Error "time limit to edit exeeded"
+      else
+        sign = @_signComment c
+        if sign == c.sign
+          c.date = d
+          c.comment = newComment
+          c.sign = @_signComment c
+        else
+          throw new Error "signature not match"
+      @updateTicket t
+      console.log "You update comment:\n#{newComment}" if "true" == @config.get "verbose"
+    else
+      console.log "Error! can't update comment for ticket #{id}" if "true" == @config.get "verbose"
+
+  ###
+  Get comment by id
+
+  @param {String} ticketId Ticket id
+  @param {String} cid Comment id
+  @return {Array|null} comment Return array of ticket and comment index in comments.
+                               If comment not found, return null
+  ###
+  getComment: (id, cid) ->
+    t = @getSingleTicket id
+    c = no
+    i = 0
+    if "." == cid[0] && t.comments[cid.substring 1]
+      return [t, cid.substring 1]
+    else
+      for com in t.comments
+        if 0 == com.id.indexOf cid
+          return [t, i]
+        i++
+    null
 
   ###
   Show commnets on ticket
@@ -304,9 +364,12 @@ class Tracker
   _showTicketComments: (t, done) ->
     if 0 < t.comments.length
       console.log ucs "\nComments:\n",  done, "grey", ""
+      i = 0
       for c in t.comments
-        console.log ucs "#{c.author.user} <#{c.author.email}> :", done, "grey", ""
+        console.log ccn(i, c.id) +
+          ucs " #{c.author.user} <#{c.author.email}> :", done, "grey", ""
         console.log ucs c.comment,  done, "grey", ""
+        i++
     else
       console.log "No comments"
 
@@ -371,14 +434,14 @@ class Tracker
           if 0 < t.comments.length then ucs " [c:#{t.comments.length}]\t", done, "grey", "" else "     \t"
         switch @config.get "log"
           when "tiny"
-            console.log "#{num}\t#{uct cFL(t.text, 60), null, done} " +
+            console.log "#{num}\t#{uct cfl(t.text, 60), null, done} " +
               "\t#{comments}".blue
           when "long"
             @_logOne t, search
           else                  # short of anything else is default
-            id = cFL(t.id, 10).yellow  # todo +feature move width to settings
+            id = cfl(t.id, 10).yellow  # todo +feature move width to settings
             id = id.inverse.bold if "yes" == @config.get("useZebra") && 0 == i % 2
-            console.log "#{id}#{num}\t#{uct cFL(t.text, 60), search, done}\t#{comments}" +
+            console.log "#{id}#{num}\t#{uct cfl(t.text, 60), search, done}\t#{comments}" +
                 ucs "#{util.formatDateTime t.modified}\t#{t.author.user}",
                   done, "grey", ""
     if null == search

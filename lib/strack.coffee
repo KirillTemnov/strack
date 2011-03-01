@@ -81,11 +81,32 @@ exports.run = ->
             tracker.addTicket data
       when "edit", "e"
         if 3 < process.argv.length
-          t = tracker.getSingleTicket process.argv[3]
-          util.editTextLines t.text, config.get("eof"),  ((text) ->
-            if text
-              t.text = text
-              tracker.updateTicket t), config.get "showLineNumbers"
+          id = process.argv[3]
+          if "." == id[0]       # show comment
+            id = "^" + id.substring 1
+            cid = process.argv[4]
+            commentList = tracker.getComment id, cid
+            if commentList      # comment found?
+              [ticket, cId] = commentList
+              c = ticket.comments[cId].comment
+              cdate = new Date Date.parse c.date
+              d = new Date()
+              diff = d - cdate
+              if tracker.editTimeLimit < diff   # still can edit?
+                console.log "Error, edit time limit exceed"
+              else              # ok than!
+                util.editTextLines c, config.get("eof"),
+                  ((text) ->
+                    if text
+                      tracker.updateComment id, cid, text), config.get "showLineNumbers"
+            else
+              console.log "Invalid comment id (#{cid})"
+          else                  # edit ticket
+            t = tracker.getSingleTicket id
+            util.editTextLines t.text, config.get("eof"),  ((text) ->
+              if text
+                t.text = text
+                tracker.updateTicket t), config.get "showLineNumbers"
         else
           console.log "To edit state text add id"
       when "config", "cf"
