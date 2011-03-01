@@ -20,6 +20,7 @@ class Tracker
   @api private
   ###
   _create: (params={}) ->
+    @name = params.name || ""   # project name
     @tickets = params.tickets || {}
     @states = params.states || {
       initial: ["todo", "bug", "accept"]
@@ -61,13 +62,14 @@ class Tracker
   @api public
   ###
   save: () ->
+    name = "\"name\": \"#{@name}\""
     states = '"states":' + JSON.stringify @states
     tickStr = '"tickets": {\n'
     tickets = []
     for k,v of @tickets
       tickets.push '"' + k + '": ' + JSON.stringify v
     tickStr += tickets.join(", \n") + "\n}"
-    data = "{\n#{tickStr},\n#{states}\n}\n"
+    data = "{#{name},\n#{tickStr},\n#{states}\n}\n"
     fs.writeFileSync @filename, data
 
   ###

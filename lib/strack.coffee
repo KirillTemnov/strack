@@ -3,6 +3,7 @@ util = require "./util"
 Tracker = require("./tracker").Tracker
 sys = require "sys"
 parser = require "./source-parser"
+exp = require "./export"
 usage = '''
 Usage:
 
@@ -107,6 +108,21 @@ exports.run = ->
                 tracker.updateTicket t), config.get "showLineNumbers"
         else
           console.log "To edit state text add id"
+
+      when "export"
+        format = process.argv[3]
+        if format && format in ["txt", "org", "htm", "html"]
+          filename = process.argv[4] || "strack.#{format}"
+          switch format
+            when "txt"
+              exp.toTxt tracker, filename
+            when "org"
+              exp.toOrg tracker, filename
+            when "htm", "html"
+              exp.toHtml tracker, filename
+        else
+          console.log "Add format and filename"
+
       when "config", "cf"
         key = process.argv[3] if 3 < process.argv.length
         if key
