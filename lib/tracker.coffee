@@ -255,6 +255,15 @@ class Tracker
   _signComment: (c) ->
     util.sign c.comment + c.id, @config
 
+  ###
+  Can edit this comment. Only author can edit his comment at a limited
+  time (editTimeLimit)
+
+  @param {String} ticketId Ticket id
+  @param {String} commentId Comment id
+  @return {Boolean} result REsult for current user (from config)
+  @api public
+  ###
   canEditComment: (id, cid) ->
     commLst = @getComment id, cid
     if commLst
