@@ -524,3 +524,39 @@ exports.colorizeCommentNumber = (num, id, len=12) ->
   num = num.green.inverse if 0 == n % 2
   id = id.substring(0, len).yellow
   return "#{num} #{id}"
+
+###
+Search tags in text and remove them from text
+
+@param {String} text Text with tags
+@param {String} tagPrefix Tag prefix. All tags in result will have this prefix. Default - ""
+@param {RegExp} tagsRe Regulat Expression for searching tags. Default bings to "+tag"
+@return {Array} result Result consists of new text at 0 position and tags list at 1 pos
+@api public
+###
+exports.searchAndRemoveTags = (text, tagPrefix="", tagsRe=/(\+\S+)/g) ->
+  tags = []
+  result = text
+  match = text.match tagsRe
+  if match
+    for t in match
+      # todo add escape for other regexp characters
+      re = new RegExp t.replace( /\+/g, "\\+"), "g"
+      result = result.replace re, ""
+      tags.push "#{tagPrefix}#{t.substring 1}"
+  [result, tags]
+
+###
+Make line longer. Increase line length with spaces to len.
+If line longer, than length, do nothing
+
+@param {String} line Source line
+@param {Number} minLength Minimum line length
+@param {String[1]} chr Space character
+@return {String} newLine
+@api public
+###
+exports.makeLineLonger = (line, len=80, chr=" ") ->
+  while len > line.length
+    line += chr
+  line
