@@ -17,7 +17,7 @@ exports.toTxt = (tracker, filename) ->
   for k,t of tracker.tickets
     out += "created: #{t.created}"
     out += "\tmodified: #{t.modified}" if t.created != t.modified
-    out += "\n#{t.author.user} <#{t.author.email}>\n#{t.text}\n"
+    out += "\n#{t.author.user} <#{t.author.email}>\n#{t.text}\n" # bug write [Object object]
     out += "Comments :\n" if 0 < t.comments.length
     for c in t.comments
       out += "#{c.author}:\n#{c.comment}\n"
@@ -41,11 +41,15 @@ exports.toOrg = (tracker, filename) ->
   for t in tracker._sortTickets()
     [text, tags] = util.searchAndRemoveTags t.text, ""
     text = text.replace('@' + t.state, '').replace /\n/g, '\n   '
-    tags = tags.join(":").replace(/[\-\.]/g, "")
+    text = text.split "\n"
+    firstLine = text[0]
+    restLines = text[1..]
+    tags = tags.join(":").replace(/[\-\.\,]/g, "")
     tags = ":#{tags}:" if tags
-    out += "** #{t.state.toUpperCase()} " + "#{text.replace '\n', tags + '\n'}"
+    out += "** #{t.state.toUpperCase()} " + "#{util.makeLineLonger(firstLine)} #{tags}\n"
+    out += "#{restLines.join '\n'}"
     if 0 < t.comments.length
-      out += "*** Comments\n"
+      out += "\n*** Comments\n"
       for c in t.comments
         out += "    - #{c.comment.replace /\n/g, '\n     '}\n"
     out += "\n"
