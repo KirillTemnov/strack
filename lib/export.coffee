@@ -63,4 +63,19 @@ Export tracker to html file
 @api public
 ###
 exports.toHtml = (tracker, filename) ->
-  "export to html"
+  out = '<html><head><meta charset="utf-8"><title>' +
+    "#{tracker.name || tracker.config.get('user') + '\'s project' &mdash config.get 'user'}" +
+    '</title><body><ul style="list-style:none;">\n'
+  for t in tracker._sortTickets()
+    [text, tags] = util.searchAndReplaceTags t.text, (tag) ->
+      "<a href=\"#\">#{tag}</a>"
+
+    text = text.replace /\n/g, "<br />"
+    if util.getState(t.text, tracker.config) in tracker.states.final
+      styles = 'style="color:grey"'
+      text = "<s>#{text}</s>"
+    else
+      styles = ""
+    out += "<li #{styles}>#{text} </li>\n"
+  out += "</ul>\n</body></html>\n"
+  fs.writeFileSync filename, out

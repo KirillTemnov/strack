@@ -560,3 +560,15 @@ exports.makeLineLonger = (line, len=80, chr=" ") ->
   while len > line.length
     line += chr
   line
+
+exports.searchAndReplaceTags = (text, replaceFn, tagsRe=/(\+\S+)/g) ->
+  tags = []
+  result = text
+  match = text.match tagsRe
+  if match
+    for t in match
+      # todo add escape for other regexp characters
+      re = new RegExp t.replace( /\+/g, "\\+"), "g"
+      result = result.replace re, replaceFn t.substring 1
+      tags.push t.substring
+  [result, tags]
