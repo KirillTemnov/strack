@@ -526,27 +526,6 @@ exports.colorizeCommentNumber = (num, id, len=12) ->
   return "#{num} #{id}"
 
 ###
-Search tags in text and remove tag prefixes
-
-@param {String} text Text with tags
-@param {String} tagPrefix Tag prefix. All tags in result will have this prefix. Default - ""
-@param {RegExp} tagsRe Regulat Expression for searching tags. Default bings to "+tag"
-@return {Array} result Result consists of new text at 0 position and tags list at 1 pos
-@api public
-###
-exports.searchAndDeactivateTags = (text, tagPrefix="", tagsRe=/(\+\S+)/g) ->
-  tags = []
-  result = text
-  match = text.match tagsRe
-  if match
-    for t in match
-      # todo add escape for other regexp characters
-      re = new RegExp t.replace( /\+/g, "\\+"), "g"
-      result = result.replace re, t.substring 1
-      tags.push "#{tagPrefix}#{t.substring 1}"
-  [result, tags]
-
-###
 Make line longer. Increase line length with spaces to len.
 If line longer, than length, do nothing
 
@@ -561,6 +540,17 @@ exports.makeLineLonger = (line, len=80, chr=" ") ->
     line += chr
   line
 
+###
+Search tags in text and replace them
+
+@param {String} text Text with tags
+@param {Function} replaceFn Replace function, call on every tag and must return new string
+                            that replace old tagstring
+@param {RegExp} tagsRe Regular Expression for searching tags. Default bings to "+tag"
+@return {Array} result Result consists of new text at 0 position and tags list at 1 pos
+@api public
+###
+
 exports.searchAndReplaceTags = (text, replaceFn, tagsRe=/(\+\S+)/g) ->
   tags = []
   result = text
@@ -570,5 +560,5 @@ exports.searchAndReplaceTags = (text, replaceFn, tagsRe=/(\+\S+)/g) ->
       # todo add escape for other regexp characters
       re = new RegExp t.replace( /\+/g, "\\+"), "g"
       result = result.replace re, replaceFn t.substring 1
-      tags.push t.substring
+      tags.push t.substring 1
   [result, tags]
