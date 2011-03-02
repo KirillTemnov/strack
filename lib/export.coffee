@@ -39,7 +39,7 @@ exports.toOrg = (tracker, filename) ->
   out += "\n#+AUTHOR: #{tracker.config.get 'user'}\n#+EMAIL: #{tracker.config.get 'email'}\n"
   out +="\n\n* #{tracker.name || tracker.config.get('user') + '\'s project'}[/]\n"
   for t in tracker._sortTickets()
-    [text, tags] = util.searchAndRemoveTags t.text, ""
+    [text, tags] = util.searchAndDeactivateTags t.text, ""
     text = text.replace('@' + t.state, '').replace /\n/g, '\n   '
     text = text.split "\n"
     firstLine = text[0]

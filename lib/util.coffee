@@ -526,7 +526,7 @@ exports.colorizeCommentNumber = (num, id, len=12) ->
   return "#{num} #{id}"
 
 ###
-Search tags in text and remove them from text
+Search tags in text and remove tag prefixes
 
 @param {String} text Text with tags
 @param {String} tagPrefix Tag prefix. All tags in result will have this prefix. Default - ""
@@ -534,7 +534,7 @@ Search tags in text and remove them from text
 @return {Array} result Result consists of new text at 0 position and tags list at 1 pos
 @api public
 ###
-exports.searchAndRemoveTags = (text, tagPrefix="", tagsRe=/(\+\S+)/g) ->
+exports.searchAndDeactivateTags = (text, tagPrefix="", tagsRe=/(\+\S+)/g) ->
   tags = []
   result = text
   match = text.match tagsRe
@@ -542,7 +542,7 @@ exports.searchAndRemoveTags = (text, tagPrefix="", tagsRe=/(\+\S+)/g) ->
     for t in match
       # todo add escape for other regexp characters
       re = new RegExp t.replace( /\+/g, "\\+"), "g"
-      result = result.replace re, ""
+      result = result.replace re, t.substring 1
       tags.push "#{tagPrefix}#{t.substring 1}"
   [result, tags]
 
